@@ -12,7 +12,7 @@ fi
 
 test -d mount && rmdir mount
 test -e rootfs.img && rm rootfs.img
-test -d LiveOS && rmdir LiveOS
+test -d LiveOS && rm -rf LiveOS
 
 # Get it right first time.
 mkdir mount
@@ -32,6 +32,9 @@ moss -D mount ar volatile -p 10 https://dev.serpentos.com/volatile/x86_64/stone.
 moss -D mount it -y $pkgs
 
 # TODO: Install dracut, rebuild the initrd from the "current" kernel
+
+# Cleanup!
+rm -rf mount/.moss/cache/downloads/*
 
 # Tear it down
 sudo umount $(pwd)/mount
