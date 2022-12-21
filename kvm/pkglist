@@ -18,3 +18,11 @@ inetutils
 wget
 kmod
 bash-completion
+dracut
+lvm2
+grep
+sed
+binary(xargs)
+binary(cpio)
+binary(unsquashfs)
+binary(gzip)
