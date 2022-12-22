@@ -43,7 +43,7 @@ cp mount/usr/lib/kernel/com.serpentos.* boot/kernel
 
 # Regenerate dracut. BLUH.
 kver=$(ls mount/usr/lib/modules)
-moss-container -u 0 -d mount -- dracut -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd /initrd
+moss-container -u 0 -d mount -- dracut --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd /initrd
 cp mount/initrd boot/initrd
 
 # Cleanup!
