@@ -34,7 +34,6 @@ BINARIES=(
     mount
     resize2fs
     sync
-    systemctl
     xorriso
 )
 # up front check for necessary binaries
