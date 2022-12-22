@@ -36,6 +36,16 @@ moss -D mount ar volatile -p 10 https://dev.serpentos.com/volatile/x86_64/stone.
 # Install the pkgs
 moss -D mount it -y $pkgs
 
+# Fix ldconfig
+mkdir mount/var/cache/ldconfig -p
+moss-container -u 0 -d mount -- ldconfig
+
+# Get basic env working
+moss-container -u 0 -d mount -- systemd-sysusers
+moss-container -u 0 -d mount -- systemd-tmpfiles --create
+moss-container -u 0 -d mount -- systemd-firstboot --force --setup-machine-id --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash
+moss-container -u 0 -d mount -- systemctl enable systemd-resolved systemd-networkd getty@tty1
+
 # TODO: Install dracut, rebuild the initrd from the "current" kernel
 # Extract assets
 cp mount/usr/lib/systemd/boot/efi/systemd-bootx64.efi boot/bootx64.efi
@@ -62,7 +72,7 @@ e2fsck -fy rootfs.img
 
 mkdir LiveOS
 mv rootfs.img LiveOS/.
-mksquashfs LiveOS/ squashfs.img -comp zstd -root-becomes LiveOS -keep-as-directory -all-root
+mksquashfs LiveOS/ squashfs.img -comp xz -root-becomes LiveOS -keep-as-directory -all-root
 rm LiveOS/rootfs.img
 mv squashfs.img LiveOS/.
 
@@ -97,6 +107,7 @@ xorriso -as mkisofs \
     -no-emul-boot \
     -eltorito-platform efi \
     -eltorito-boot EFI/Boot/efiboot.img \
+    -isohybrid-gpt-basdat \
     -V "SERPENTISO" -A "SERPENTISO" \
     root
 
