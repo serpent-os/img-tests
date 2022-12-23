@@ -25,3 +25,4 @@ binary(xargs)
 binary(cpio)
 binary(unsquashfs)
 binary(gzip)
+linux-firmware-intel
