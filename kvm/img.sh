@@ -89,7 +89,7 @@ chown -Rc root:root mount
 chmod -Rc 00755 mount
 
 # Setup the root image
-fallocate -l 4GB rootfs.img
+fallocate -l 2GB rootfs.img
 # don't want/need journaling on the fs
 mkfs.ext3 -F rootfs.img
 mount -o loop rootfs.img mount
