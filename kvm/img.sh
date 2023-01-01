@@ -111,7 +111,6 @@ moss-container -u 0 -d mount/ -- systemd-tmpfiles --create
 moss-container -u 0 -d mount/ -- systemd-firstboot --force --setup-machine-id --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash
 moss-container -u 0 -d mount/ -- systemctl enable systemd-resolved systemd-networkd getty@tty1
 
-# TODO: Install dracut, rebuild the initrd from the "current" kernel
 # Extract assets
 cp -v mount/usr/lib/systemd/boot/efi/systemd-bootx64.efi boot/bootx64.efi
 cp -v mount/usr/lib/kernel/com.serpentos.* boot/kernel
