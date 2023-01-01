@@ -19,3 +19,4 @@ kmod
 bash-completion
 lvm2
 linux-firmware-intel
+binary(neofetch)
