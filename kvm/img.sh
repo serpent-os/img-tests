@@ -148,7 +148,7 @@ e2fsck -fy rootfs.img
 
 mkdir -pv LiveOS
 mv -v rootfs.img LiveOS/.
-mksquashfs LiveOS/ squashfs.img -comp xz -root-becomes LiveOS -keep-as-directory -all-root
+mksquashfs LiveOS/ squashfs.img -comp zstd -root-becomes LiveOS -keep-as-directory -all-root
 rm -f LiveOS/rootfs.img
 mv -v squashfs.img LiveOS/.
 
