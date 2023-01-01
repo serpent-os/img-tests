@@ -17,12 +17,5 @@ iproute2
 inetutils
 kmod
 bash-completion
-dracut
 lvm2
-binary(grep)
-binary(sed)
-binary(xargs)
-binary(cpio)
-binary(unsquashfs)
-binary(gzip)
 linux-firmware-intel

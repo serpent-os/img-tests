@@ -19,6 +19,9 @@ RESET='\033[0m'
 test -f ./pkglist || die "\nThis script MUST be run from within the kvm/ dir with the ./pkglist file.\n"
 pkgs=$(cat pkglist)
 
+test -f ./initrdlist || die "initrd package list is absent"
+initrd=$(cat initrdlist)
+
 # Root check
 if [[ "${UID}" -ne 0 ]]; then
     die "\nThis script MUST be run as root.\n"
@@ -65,6 +68,9 @@ DIRS=(
     root
     LiveOS
     boot
+    overlay.upper
+    overlay.mount
+    overlay.work
 )
 
 # clean up dirs
@@ -110,15 +116,26 @@ moss-container -u 0 -d mount/ -- systemctl enable systemd-resolved systemd-netwo
 cp -v mount/usr/lib/systemd/boot/efi/systemd-bootx64.efi boot/bootx64.efi
 cp -v mount/usr/lib/kernel/com.serpentos.* boot/kernel
 
+# Setup the overlay.
+mkdir overlay.upper
+mkdir overlay.mount
+mkdir overlay.work
+
+mount -t overlay -o lowerdir=$(pwd)/mount,upperdir=$(pwd)/overlay.upper,workdir=$(pwd)/overlay.work overlay overlay.mount || die "Failed to mount overlay"
+
+# Install dracut now
+moss -D overlay.mount it ${initrd} -y || die "Failed to install overlay packages"
+
 # Regenerate dracut. BLUH.
 kver=$(ls mount/usr/lib/modules)
-moss-container -u 0 -d mount/ -- dracut --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd /initrd
-cp -v mount/initrd boot/initrd
+moss-container -u 0 -d overlay.mount/ -- dracut --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd
+cp -v overlay.mount/initrd boot/initrd
+
+# Tear it down
+umount $(pwd)/overlay.mount
 
 # Cleanup!
 rm -rf mount/.moss/cache/downloads/*
-
-# Tear it down
 umount $(pwd)/mount
 
 # Shrink size to minimum
