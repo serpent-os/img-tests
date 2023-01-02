@@ -158,7 +158,7 @@ mkdir -pv root
 mv -v LiveOS root/.
 
 # Create the efi img
-fallocate -l 25M efi.img
+fallocate -l 28M efi.img
 mkfs.vfat -F 12 efi.img -n EFIBOOTISO
 mount -o loop efi.img mount
 
