@@ -123,7 +123,7 @@ mkdir overlay.upper
 mkdir overlay.mount
 mkdir overlay.work
 
-mount -t overlay -o lowerdir=$(pwd)/mount,upperdir=$(pwd)/overlay.upper,workdir=$(pwd)/overlay.work overlay overlay.mount || die "Failed to mount overlay"
+mount -t overlay -o lowerdir=$(pwd)/mount,upperdir=$(pwd)/overlay.upper,workdir=$(pwd)/overlay.work,redirect_dir=on overlay overlay.mount || die "Failed to mount overlay"
 
 # Install dracut now
 moss -D overlay.mount it ${initrd} -y || die "Failed to install overlay packages"
