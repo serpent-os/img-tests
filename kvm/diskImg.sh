@@ -34,6 +34,8 @@ mount ${LODEVICE}p2 root/efi
 mkdir root/efi/EFI
 mkdir root/efi/EFI/systemd
 mkdir root/efi/EFI/Boot
+# systemd units complain if it doesnt exist.
+mkdir root/efi/loader
 
 echo "Loopback is at ${LODEVICE}"
 sync
