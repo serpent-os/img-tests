@@ -28,12 +28,12 @@ mkfs.ext4 -F ${LODEVICE}p3
 
 mount ${LODEVICE}p3 root
 mkdir root/boot
-mkdir root/esp
+mkdir root/efi
 mount ${LODEVICE}p1 root/boot
-mount ${LODEVICE}p2 root/esp
-mkdir root/esp/EFI
-mkdir root/esp/EFI/systemd
-mkdir root/esp/EFI/Boot
+mount ${LODEVICE}p2 root/efi
+mkdir root/efi/EFI
+mkdir root/efi/EFI/systemd
+mkdir root/efi/EFI/Boot
 
 echo "Loopback is at ${LODEVICE}"
 sync
@@ -46,19 +46,19 @@ moss -D root it $(cat pkglist) -y
 # OS kernel assets
 mkdir root/boot/com.serpentos
 cp root/usr/lib/kernel/com.serpentos.* root/boot/com.serpentos/kernel-static
-cp root/usr/lib/kernel/initrd-* root/com.serpentos/boot/initrd-static
+cp root/usr/lib/kernel/initrd-* root/boot/com.serpentos/initrd-static
 
 mkdir root/boot/loader/entries -p
 cp installed-os.conf root/boot/loader/entries/.
 
 # systemd boot
-cp root/usr/lib/systemd/boot/efi/systemd-bootx64.efi root/esp/EFI/systemd/systemd-bootx64.efi
-cp root/usr/lib/systemd/boot/efi/systemd-bootx64.efi root/esp/EFI/Boot/bootx64.efi
+cp root/usr/lib/systemd/boot/efi/systemd-bootx64.efi root/efi/EFI/systemd/systemd-bootx64.efi
+cp root/usr/lib/systemd/boot/efi/systemd-bootx64.efi root/efi/EFI/Boot/bootx64.efi
 
 ls -lRa root/boot
-ls -lRa root/esp
+ls -lRa root/efi
 umount root/boot
-umount root/esp
+umount root/efi
 umount root
 losetup -d ${LODEVICE}
 
