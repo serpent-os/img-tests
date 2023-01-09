@@ -44,6 +44,7 @@ moss -D root/ ar volatile -p 10 https://dev.serpentos.com/volatile/x86_64/stone.
 moss -D root it $(cat pkglist) -y
 
 # OS kernel assets
+mkdir root/boot/com.serpentos
 cp root/usr/lib/kernel/com.serpentos.* root/boot/com.serpentos/kernel-static
 cp root/usr/lib/kernel/initrd-* root/com.serpentos/boot/initrd-static
 
