@@ -1,4 +1,4 @@
-#!/bin/bash###
+#!/bin/bash
 
 ### WARNING: SUPER ROUGH PROTOTYPE
 
@@ -44,8 +44,8 @@ moss -D root/ ar volatile -p 10 https://dev.serpentos.com/volatile/x86_64/stone.
 moss -D root it $(cat pkglist) -y
 
 # OS kernel assets
-cp root/usr/lib/kernel/com.serpentos.* root/boot/kernel
-cp root/usr/lib/kernel/initrd-* root/boot/initrd
+cp root/usr/lib/kernel/com.serpentos.* root/boot/com.serpentos/kernel-static
+cp root/usr/lib/kernel/initrd-* root/com.serpentos/boot/initrd-static
 
 mkdir root/boot/loader/entries -p
 cp installed-os.conf root/boot/loader/entries/.
