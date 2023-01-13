@@ -95,8 +95,7 @@ mkfs.ext3 -F rootfs.img
 mount -o loop rootfs.img mount
 
 # Add repositories
-moss -D mount/ ar protosnek -p 0 https://dev.serpentos.com/protosnek/x86_64/stone.index
-moss -D mount/ ar volatile -p 10 https://dev.serpentos.com/volatile/x86_64/stone.index
+moss -D mount/ ar volatile https://dev.serpentos.com/volatile/x86_64/stone.index
 
 # Install the pkgs
 moss -D mount/ it -y $pkgs

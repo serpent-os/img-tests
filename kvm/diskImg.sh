@@ -41,8 +41,7 @@ echo "Loopback is at ${LODEVICE}"
 sync
 
 # get moss in.
-moss -D root/ ar protosnek -p 0 https://dev.serpentos.com/protosnek/x86_64/stone.index
-moss -D root/ ar volatile -p 10 https://dev.serpentos.com/volatile/x86_64/stone.index
+moss -D root/ ar volatile https://dev.serpentos.com/volatile/x86_64/stone.index
 moss -D root it $(cat pkglist) -y
 
 # OS kernel assets
