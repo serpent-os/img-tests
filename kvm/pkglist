@@ -1,4 +1,5 @@
 binary(moss)
+binary(grep)
 systemd
 coreutils
 util-linux
@@ -18,5 +19,4 @@ inetutils
 kmod
 bash-completion
 lvm2
-linux-firmware-intel
 binary(neofetch)
