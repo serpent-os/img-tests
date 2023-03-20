@@ -1,5 +1,6 @@
 binary(moss)
 binary(grep)
+binary(setfont)
 systemd
 coreutils
 util-linux
