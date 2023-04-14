@@ -6,3 +6,4 @@ binary(strip)
 binary(unsquashfs)
 binary(xargs)
 dracut
+intel-microcode
