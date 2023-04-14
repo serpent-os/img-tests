@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: Zlib
 #
-# Serpent OS prototype linux-kvm ISO image generator
+# Serpent OS prototype linux-desktop ISO image generator
 
 die () {
     echo -e "$*"
@@ -56,7 +56,7 @@ done
 if [[ ${BINARY_NOT_FOUND} -gt 0 ]]; then
     die "\nNecessary prerequisites not met, please install missing tool(s).\n"
 else
-    echo -e "\nAll necessary binaries found, generating Serpent OS linux-kvm ISO image...\n"
+    echo -e "\nAll necessary binaries found, generating Serpent OS linux-desktop ISO image...\n"
 fi
 #die "Exit because this is just a test."
 
