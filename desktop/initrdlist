@@ -1,8 +1,8 @@
-dracut
-binary(grep)
-binary(sed)
-binary(xargs)
 binary(cpio)
-binary(unsquashfs)
+binary(grep)
 binary(gzip)
+binary(sed)
 binary(strip)
+binary(unsquashfs)
+binary(xargs)
+dracut
