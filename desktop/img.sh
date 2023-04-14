@@ -129,7 +129,7 @@ moss -D overlay.mount it ${initrd} -y || die "Failed to install overlay packages
 
 # Regenerate dracut. BLUH.
 kver=$(ls mount/usr/lib/modules)
-moss-container -u 0 -d overlay.mount/ -- dracut --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd
+moss-container -u 0 -d overlay.mount/ -- dracut --early-microcode --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd
 cp -v overlay.mount/initrd boot/initrd
 
 # Tear it down
