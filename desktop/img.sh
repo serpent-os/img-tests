@@ -16,7 +16,7 @@ RED='\033[0;31m'
 RESET='\033[0m'
 
 # Pkg list check
-test -f ./pkglist || die "\nThis script MUST be run from within the kvm/ dir with the ./pkglist file.\n"
+test -f ./pkglist || die "\nThis script MUST be run from within the desktop/ dir with the ./pkglist file.\n"
 pkgs=$(cat pkglist)
 
 test -f ./initrdlist || die "initrd package list is absent"
@@ -95,10 +95,10 @@ mkfs.ext3 -F rootfs.img
 mount -o loop rootfs.img mount
 
 # Add repositories
-moss -D mount/ ar volatile https://dev.serpentos.com/volatile/x86_64/stone.index
+moss -D mount/ repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index
 
 # Install the pkgs
-moss -D mount/ it -y $pkgs
+moss -D mount/ install -y $pkgs
 
 # Fix ldconfig
 mkdir -pv mount/var/cache/ldconfig
@@ -125,7 +125,7 @@ mkdir overlay.work
 mount -t overlay -o lowerdir=$(pwd)/mount,upperdir=$(pwd)/overlay.upper,workdir=$(pwd)/overlay.work,redirect_dir=on overlay overlay.mount || die "Failed to mount overlay"
 
 # Install dracut now
-moss -D overlay.mount it ${initrd} -y || die "Failed to install overlay packages"
+moss -D overlay.mount install ${initrd} -y || die "Failed to install overlay packages"
 
 # Regenerate dracut. BLUH.
 kver=$(ls mount/usr/lib/modules)
