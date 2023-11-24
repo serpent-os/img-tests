@@ -2,7 +2,7 @@
 #
 # SPDX-FileCopyrightText: © 2020-2023 Serpent OS Developers
 #
-# SPDX-License-Identifier: Zlib
+# SPDX-License-Identifier: MPL-2.0
 #
 # Serpent OS prototype linux-kvm ISO image generator
 
@@ -17,10 +17,19 @@ RESET='\033[0m'
 
 # Pkg list check
 test -f ./pkglist || die "\nThis script MUST be run from within the kvm/ dir with the ./pkglist file.\n"
-pkgs=$(cat pkglist)
+test -f ../pkglist-base || die "\nThis script MUST be able to find the ../pkglist-base file.\n"
+
+# start with a common base of packages
+readarray -t pkgs < ../pkglist-base
+
+# add linux-kvm specific packages
+pkgs+=($(cat ./pkglist))
+
+#echo -e "List of packages:\n${pkgs[@]}\n"
+#exit 1
 
 test -f ./initrdlist || die "initrd package list is absent"
-initrd=$(cat initrdlist)
+readarray -t initrd < ./initrdlist
 
 # Root check
 if [[ "${UID}" -ne 0 ]]; then
@@ -98,7 +107,7 @@ mount -o loop rootfs.img mount
 moss -D mount/ repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index
 
 # Install the pkgs
-moss -D mount/ install -y $pkgs
+moss -D mount/ install -y "${pkgs[@]}"
 
 # Fix ldconfig
 mkdir -pv mount/var/cache/ldconfig
@@ -125,7 +134,7 @@ mkdir overlay.work
 mount -t overlay -o lowerdir=$(pwd)/mount,upperdir=$(pwd)/overlay.upper,workdir=$(pwd)/overlay.work,redirect_dir=on overlay overlay.mount || die "Failed to mount overlay"
 
 # Install dracut now
-moss -D overlay.mount install ${initrd} -y || die "Failed to install overlay packages"
+moss -D overlay.mount install "${initrd[@]}" -y || die "Failed to install overlay packages"
 
 # Regenerate dracut. BLUH.
 kver=$(ls mount/usr/lib/modules)
