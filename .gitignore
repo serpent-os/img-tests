@@ -1,4 +1,7 @@
 boot/
+mount/
 root/
+sosroot/
+*.img
 *.iso
 overlay.*

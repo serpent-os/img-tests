@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 ### WARNING: SUPER ROUGH PROTOTYPE
 
@@ -40,9 +40,11 @@ mkdir root/efi/loader
 echo "Loopback is at ${LODEVICE}"
 sync
 
+readarray -t pkgs < ../pkglist-base
+pkgs+=($(cat ./pkglist))
 # get moss in.
 moss -D root/ repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index
-moss -D root install $(cat pkglist) -y
+moss -D root/ install "${pkgs[@]}" -y
 
 # Fix ldconfig
 mkdir -pv root/var/cache/ldconfig
