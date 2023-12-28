@@ -5,3 +5,4 @@ sosroot/
 *.img
 *.iso
 overlay.*
+boot-systemd-nspawn-container.sh
