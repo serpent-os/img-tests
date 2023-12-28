@@ -76,6 +76,15 @@ you can set the DESTDIR variable when calling ${0} like so:
 EOF
 }
 
+# Make it more convenient to boot into the created sosroot/ later on
+createBootScript () {
+    cat <<EOF > boot-systemd-nspawn-container.sh
+#!/usr/bin/env bash
+#
+exec sudo systemd-nspawn --bind=${BOULDERCACHE}/ -D ${SOROOT}/ -b
+EOF
+}
+
 MSG="Removing old ${SOSROOT} directory..."
 printInfo "${MSG}"
 sudo rm -rf "${SOSROOT}" || die "${MSG} failed, exiting."
@@ -113,6 +122,8 @@ printInfo "${MSG}"
 sudo cp -va /etc/protocols "${SOSROOT}"/etc/ || die "${MSG} failed, exiting."
 
 showHelp
+# Make it simple to boot into the created sosroot at a later point
+createBootScript
 
 # clean up env
 unset BOULDERCACHE
