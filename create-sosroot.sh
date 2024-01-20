@@ -81,7 +81,7 @@ createBootScript () {
     cat <<EOF > boot-systemd-nspawn-container.sh
 #!/usr/bin/env bash
 #
-exec sudo systemd-nspawn --bind=${BOULDERCACHE}/ -D ${SOROOT}/ -b
+exec sudo systemd-nspawn --bind=${BOULDERCACHE}/ -D ${SOSROOT}/ -b
 EOF
 }
 
