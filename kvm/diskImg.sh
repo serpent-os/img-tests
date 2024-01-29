@@ -40,11 +40,11 @@ mkdir root/efi/loader
 echo "Loopback is at ${LODEVICE}"
 sync
 
-readarray -t pkgs < ../pkglist-base
-pkgs+=($(cat ./pkglist))
+readarray -t PACKAGES < ../pkglist-base
+PACKAGES+=($(cat ./pkglist))
 # get moss in.
 moss -D root/ repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index
-moss -D root/ install "${pkgs[@]}" -y
+moss -D root/ install "${PACKAGES[@]}" -y
 
 # Fix ldconfig
 mkdir -pv root/var/cache/ldconfig

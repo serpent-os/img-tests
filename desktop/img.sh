@@ -20,12 +20,12 @@ test -f ./pkglist || die "\nThis script MUST be run from within the desktop/ dir
 test -f ../pkglist-base || die "\nThis script MUST be able to find the ../pkglist-base file.\n"
 
 # start with a common base of packages
-readarray -t pkgs < ../pkglist-base
+readarray -t PACKAGES < ../pkglist-base
 
 # add linux-desktop specific packages
-pkgs+=($(cat ./pkglist))
+PACKAGES+=($(cat ./pkglist))
 
-#echo -e "List of packages:\n${pkgs[@]}\n"
+#echo -e "List of packages:\n${PACKAGES[@]}\n"
 #exit 1
 
 test -f ./initrdlist || die "initrd package list is absent"
@@ -106,8 +106,8 @@ mount -o loop rootfs.img mount
 # Add repositories
 moss -D mount/ repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index
 
-# Install the pkgs
-moss -D mount/ install -y "${pkgs[@]}"
+# Install the PACKAGES
+moss -D mount/ install -y "${PACKAGES[@]}"
 
 # Fix ldconfig
 mkdir -pv mount/var/cache/ldconfig
