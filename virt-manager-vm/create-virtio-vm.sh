@@ -38,7 +38,7 @@ You can now start a virtiofs machine via the virt-manager UI!
 If you want to store your machine somewhere else than ${SOSROOT},
 just call the script with
 
-    SOSROOT="/some/where/else" ./create-virtio-vm.sh
+    VMDIR="/some/where/else" ./create-virtio-vm.sh
 
 In case you directly want to install Sway as a desktop environment,
 call the script with
