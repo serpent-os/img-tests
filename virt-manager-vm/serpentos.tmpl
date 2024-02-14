@@ -13,6 +13,7 @@
     <vcpu placement="static">4</vcpu>
     <os>
       <type arch="x86_64" machine="q35">hvm</type>
+      <loader readonly="yes" type="pflash">###UEFIPAYLOAD###</loader>
       <kernel>###SOSROOT###/usr/lib/kernel/current.kernel</kernel>
       <initrd>###SOSROOT###/usr/lib/kernel/current.initrd</initrd>
       <cmdline>rootfstype=virtiofs root=root rw quiet loglevel=3 rd.modules-load=virtio_pci</cmdline>

@@ -8,3 +8,5 @@ overlay.*
 boot-systemd-nspawn-container.sh
 serpentos.xml
 .#sosroot.lck
+issue
+nsswitch.conf
