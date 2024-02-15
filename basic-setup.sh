@@ -80,10 +80,11 @@ basicSetup () {
     printInfo "${MSG}"
     sudo mkdir -pv "${SOSROOT}"/{etc,proc,run,sys,var,var/local} || die "${MSG}"
 
-    MSG="Ensuring that we get a working nss-systemd-compatible nssswitch.conf..."
-    printInfo "${MSG}"
-    createNssswitchConf || die "${MSG}"
-    sudo cp -v ./nsswitch.conf "${SOSROOT}"/etc/ || die "${MSG}"
+    # No longer necessary -- moss triggers have been fixed to respect trigger dep order now
+    #MSG="Ensuring that we get a working nss-systemd-compatible nssswitch.conf..."
+    #printInfo "${MSG}"
+    #createNssswitchConf || die "${MSG}"
+    #sudo cp -v ./nsswitch.conf "${SOSROOT}"/etc/ || die "${MSG}"
 
     MSG="Ensuring that various network protocols function..."
     printInfo "${MSG}"
