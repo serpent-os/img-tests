@@ -8,19 +8,31 @@
 source ../basic-setup.sh
 
 SOSROOT="${VMDIR:-/mnt/serpentos}"
+SOSNAME="${VMNAME:-serpentos}"
 ENABLE_SWAY="${ENABLE_SWAY:-false}"
 
-showHelp() {
+showStartMessage() {
     cat <<EOF
+
+You can now start a virtiofs machine via the virt-manager UI!
 
 ----
 
-You can now start a virtiofs machine via the virt-manager UI!
+EOF
+}
+
+showHelp() {
+    cat <<EOF
 
 If you want to store your machine somewhere else than ${SOSROOT},
 just call the script with
 
     VMDIR="/some/where/else" ./create-virtio-vm.sh
+
+If you want to name your machine somewhere else than ${SOSNAME},
+just call the script with 
+    
+    VMNAME="some_other_name" ./create-virtio-vm.sh
 
 In case you directly want to install Sway as a desktop environment,
 call the script with
@@ -34,6 +46,14 @@ settings that the correct GPU is being used.
 EOF
 }
 
+if [ "$1" == "help" ] || [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
+    showHelp
+    cleanEnv
+    unset VMDIR
+    unset VMNAME
+    unset ENABLE_SWAY
+    exit 1
+fi
 
 # Pkg list check
 checkPrereqs
@@ -54,21 +74,23 @@ basicSetup
 
 MSG="Removing previous VM configuration..."
 printInfo "${MSG}"
-if sudo virsh desc serpentos &> /dev/null; then
-    sudo virsh destroy serpentos || true
-    sudo virsh undefine serpentos --keep-nvram || die "'virsh undefine serpent' failed, exiting."
+if sudo virsh desc "${SOSNAME}" &> /dev/null; then
+    sudo virsh destroy "${SOSNAME}" || true
+    sudo virsh undefine "${SOSNAME}" --keep-nvram || die "'virsh undefine serpent' failed, exiting."
 fi
 
-MSG="Setting up virt-mananger serpentos instance from template..."
+MSG="Setting up virt-mananger ${SOSNAME} instance from template..."
 printInfo "${MSG}"
 FOUNDPAYLOAD="$(find /usr/share -name OVMF_CODE.fd)"
 # Defaults to the location in Solus
 UEFIPAYLOAD="${FOUNDPAYLOAD:-/usr/share/edk2-ovmf/x64/OVMF_CODE.fd}"
-sed -e "s|###SOSROOT###|${SOSROOT}|g" -e "s|###UEFIPAYLOAD###|${UEFIPAYLOAD}|g" serpentos.tmpl > serpentos.xml
+sed -e "s|###SOSNAME###|${SOSNAME}|g" -e "s|###SOSROOT###|${SOSROOT}|g" -e "s|###UEFIPAYLOAD###|${UEFIPAYLOAD}|g" serpentos.tmpl > serpentos.xml
 
 virsh -c qemu:///system define serpentos.xml
 
+showStartMessage
 showHelp
 cleanEnv
 unset VMDIR
+unset VMNAME
 unset ENABLE_SWAY
