@@ -29,7 +29,7 @@ just call the script with
 
     VMDIR="/some/where/else" ./create-virtio-vm.sh
 
-If you want to name your machine somewhere else than ${SOSNAME},
+If you want to name your machine something else than ${SOSNAME},
 just call the script with 
     
     VMNAME="some_other_name" ./create-virtio-vm.sh
@@ -70,7 +70,15 @@ if [ "${ENABLE_SWAY}" = "true" ]; then
     PACKAGES+=("sway")
 fi
 
+MSG="Un-mounting ${BOULDERCACHE}${SOSROOT} if necessary..."
+printInfo "${MSG}"
+sudo umount -vf "${SOSROOT}${BOULDERCACHE}"
+
 basicSetup
+
+MSG="Bind-mounting ${BOULDERCACHE} into ${SOSROOT}..."
+printInfo ${MSG}
+sudo mount -v -o bind /var/cache/boulder "${SOSROOT}${BOULDERCACHE}"
 
 MSG="Removing previous VM configuration..."
 printInfo "${MSG}"
@@ -81,10 +89,15 @@ fi
 
 MSG="Setting up virt-mananger ${SOSNAME} instance from template..."
 printInfo "${MSG}"
-FOUNDPAYLOAD="$(find /usr/share -name OVMF_CODE.fd)"
+FOUNDPAYLOAD="$(find /usr/share -name OVMF_CODE.fd |grep ovmf/)"
 # Defaults to the location in Solus
 UEFIPAYLOAD="${FOUNDPAYLOAD:-/usr/share/edk2-ovmf/x64/OVMF_CODE.fd}"
-sed -e "s|###SOSNAME###|${SOSNAME}|g" -e "s|###SOSROOT###|${SOSROOT}|g" -e "s|###UEFIPAYLOAD###|${UEFIPAYLOAD}|g" serpentos.tmpl > serpentos.xml
+MSG="Found \$UEFIPAYLOAD: ${UEFIPAYLOAD}..."
+printInfo "${MSG}"
+sed -e "s|###SOSNAME###|${SOSNAME}|g" \
+    -e "s|###SOSROOT###|${SOSROOT}|g" \
+    -e "s|###UEFIPAYLOAD###|${UEFIPAYLOAD}|g" \
+    serpentos.tmpl > serpentos.xml
 
 virsh -c qemu:///system define serpentos.xml
 
