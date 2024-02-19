@@ -78,7 +78,7 @@ basicSetup () {
 
     MSG="Creating new ${SOSROOT} directory w/baselayout skeleton..."
     printInfo "${MSG}"
-    sudo mkdir -pv "${SOSROOT}"/{etc,proc,run,sys,var,var/local} || die "${MSG}"
+    sudo mkdir -pv "${SOSROOT}"/{etc,proc,run,sys,var,var/local,${BOULDERCACHE}} || die "${MSG}"
 
     # No longer necessary -- moss triggers have been fixed to respect trigger dep order now
     #MSG="Ensuring that we get a working nss-systemd-compatible nssswitch.conf..."
