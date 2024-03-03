@@ -185,8 +185,8 @@ e2fsck -fvy ${TMPFS}/rootfs.img
 echo ">>> Generate the LiveOS image structure..."
 mkdir -pv ${TMPFS}/LiveOS
 ln -v ${TMPFS}/rootfs.img ${TMPFS}/LiveOS/
-#time mksquashfs ${WORK}/LiveOS/ ${WORK}/squashfs.img -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp zstd
-time mksquashfs ${TMPFS}/LiveOS/ ${TMPFS}/squashfs.img -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp lz4 #-Xhc
+#time mksquashfs ${WORK}/LiveOS/ ${WORK}/squashfs.img -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp zstd #-Xcompression-level 3 # default is 15
+time mksquashfs ${TMPFS}/LiveOS/ ${TMPFS}/squashfs.img -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp lz4 #-Xhc # yields 10% extra compression
 rm -f ${TMPFS}/LiveOS/rootfs.img
 ln -v ${TMPFS}/squashfs.img ${TMPFS}/LiveOS/
 
