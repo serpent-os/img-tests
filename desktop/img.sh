@@ -98,7 +98,7 @@ chown -Rc root:root mount
 chmod -Rc 00755 mount
 
 # Setup the root image
-fallocate -l 4GB rootfs.img
+fallocate -l 10GB rootfs.img
 # don't want/need journaling on the fs
 mkfs.ext3 -F rootfs.img
 mount -o loop rootfs.img mount
@@ -166,7 +166,7 @@ mkdir -pv root
 mv -v LiveOS root/.
 
 # Create the efi img
-fallocate -l 40M efi.img
+fallocate -l 45M efi.img
 mkfs.vfat -F 12 efi.img -n EFIBOOTISO
 mount -o loop efi.img mount
 
