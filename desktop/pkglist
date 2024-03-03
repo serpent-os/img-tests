@@ -1,3 +1,8 @@
+sysbinary(gdm)
+binary(alacritty)
+liberation-fonts-ttf
+gnome-backgrounds
+
 kmod
 linux-desktop
 linux-firmware
