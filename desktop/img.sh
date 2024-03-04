@@ -11,40 +11,27 @@ die () {
     exit 1
 }
 
-# Add escape codes for color
-RED='\033[0;31m'
-RESET='\033[0m'
-
-# Pkg list check
-test -f ./pkglist || die "\nThis script MUST be run from within the desktop/ dir with the ./pkglist file.\n"
-test -f ../pkglist-base || die "\nThis script MUST be able to find the ../pkglist-base file.\n"
-
-# start with a common base of packages
-readarray -t PACKAGES < ../pkglist-base
-
-# add linux-desktop specific packages
-PACKAGES+=($(cat ./pkglist))
-
-#echo -e "List of packages:\n${PACKAGES[@]}\n"
-#exit 1
-
-test -f ./initrdlist || die "initrd package list is absent"
-readarray -t initrd < initrdlist
-
 # Root check
 if [[ "${UID}" -ne 0 ]]; then
     die "\nThis script MUST be run as root.\n"
 fi
 
+# Add escape codes for color
+RED='\033[0;31m'
+RESET='\033[0m'
+
+WORK="$(dirname $(realpath $0))"
+echo ">>> workdir \${WORK}: ${WORK}"
+TMPFS="/tmp/serpent_iso"
+echo ">>> tmpfs dir \${TMPFS}: ${TMPFS}"
+
 BINARIES=(
-    e2fsck
     fallocate
-    mkfs.ext3
     mkfs.vfat
+    mksquashfs
     moss
     moss-container
     mount
-    resize2fs
     sync
     xorriso
 )
@@ -67,126 +54,134 @@ if [[ ${BINARY_NOT_FOUND} -gt 0 ]]; then
 else
     echo -e "\nAll necessary binaries found, generating Serpent OS linux-desktop ISO image...\n"
 fi
-#die "Exit because this is just a test."
+
+# Pkg list check
+test -f ${WORK}/pkglist || die "\nThis script MUST be run from within the desktop/ dir with the ./pkglist file.\n"
+test -f ${WORK}/../pkglist-base || die "\nThis script MUST be able to find the ../pkglist-base file.\n"
+
+# start with a common base of packages
+readarray -t PACKAGES < ${WORK}/../pkglist-base
+
+# add linux-desktop specific packages
+PACKAGES+=($(cat ${WORK}/pkglist))
+
+test -f ${WORK}/initrdlist || die "initrd package list is absent"
+readarray -t initrd < ${WORK}/initrdlist
+
+cleanup () {
+    echo -e "\nCleaning up existing dirs, files and mount points...\n"
+    # clean up dirs
+    rm -rf ${TMPFS}/*
+
+    # umount existing mount recursively and lazily
+    test -d ${TMPFS}/* && umount -Rlv ${TMPFS}/*
+
+    # clean leftover existing *.img
+    test -e ${TMPFS}/*.img && rm -f ${TMPFS}/*.img
+}
+cleanup
+
+die_and_cleanup() {
+    cleanup
+    die $*
+}
 
 # From here on, exit from script on any non-zero exit status command result
 set -e
 
-DIRS=(
-    mount
-    root
-    LiveOS
-    boot
-    overlay.upper
-    overlay.mount
-    overlay.work
-)
-
-# clean up dirs
-for d in ${DIRS[@]}; do
-    test -d ${d} && rm -rf ${d}
-done
-# clean up existing rootfs.img
-test -e rootfs.img && rm -f rootfs.img
+export BOOT="${TMPFS}/boot"
+export MOUNT="${TMPFS}/mount"
+export SFSDIR="${TMPFS}/serpentfs"
 
 # Stash boot assets
-mkdir -pv boot
+mkdir -pv ${BOOT}
 
 # Get it right first time.
-mkdir -pv mount
-chown -Rc root:root mount
-chmod -Rc 00755 mount
+mkdir -pv ${MOUNT} ${SFSDIR}
+chown -Rc root:root ${MOUNT} ${SFSDIR}
+# Only chmod directories
+chmod -Rc u=rwX,g=rX,o=rX ${MOUNT} ${SFSDIR}
 
-# Setup the root image
-fallocate -l 10GB rootfs.img
-# don't want/need journaling on the fs
-mkfs.ext3 -F rootfs.img
-mount -o loop rootfs.img mount
+export RUST_BACKTRACE=1
 
-# Add repositories
-moss -D mount/ repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index
+echo ">>> Add moss volatile repository to ${SFSDIR}/ ..."
+time moss -D ${SFSDIR} repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index || die_and_cleanup "Adding moss repo failed!"
 
-# Install the PACKAGES
-moss -D mount/ install -y "${PACKAGES[@]}"
+echo ">>> Install packages to ${SFSDIR}/ ..."
+time moss -D ${SFSDIR} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
 
-# Fix ldconfig
-mkdir -pv mount/var/cache/ldconfig
-moss-container -u 0 -d mount/ -- ldconfig
+echo ">>> Fix ldconfig in ${SFSDIR}/ ..."
+mkdir -pv ${SFSDIR}/var/cache/ldconfig
+time moss-container -u 0 -d ${SFSDIR} -- ldconfig
 
-# Get basic env working
-moss-container -u 0 -d mount/ -- systemd-sysusers
-moss-container -u 0 -d mount/ -- systemd-tmpfiles --create
-moss-container -u 0 -d mount/ -- systemd-firstboot --force --setup-machine-id --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash
-moss-container -u 0 -d mount/ -- systemctl enable systemd-resolved systemd-networkd getty@tty1
+echo ">>> Set up basic environment in ${SFSDIR}/ ..."
+time moss-container -u 0 -d ${SFSDIR} -- systemd-sysusers
+time moss-container -u 0 -d ${SFSDIR} -- systemd-tmpfiles --create
+time moss-container -u 0 -d ${SFSDIR} -- systemd-firstboot --force --setup-machine-id --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash
+time moss-container -u 0 -d ${SFSDIR} -- systemctl enable systemd-resolved systemd-networkd getty@tty1
 
-# Fix perf issues. Needs packaging/merging by moss
-moss-container -u 0 -d mount/ -- systemd-hwdb update
+echo ">>> Fix performance issues. Needs packaging/merging by moss"
+time moss-container -u 0 -d ${SFSDIR} -- systemd-hwdb update
 
-# Extract assets
-cp -v mount/usr/lib/systemd/boot/efi/systemd-bootx64.efi boot/bootx64.efi
-cp -v mount/usr/lib/kernel/com.serpentos.* boot/kernel
+echo ">>> Extract assets..."
+cp -av ${SFSDIR}/usr/lib/systemd/boot/efi/systemd-bootx64.efi ${BOOT}/bootx64.efi
+cp -av ${SFSDIR}/usr/lib/kernel/com.serpentos.* ${BOOT}/kernel
 
-# Setup the overlay.
-mkdir overlay.upper
-mkdir overlay.mount
-mkdir overlay.work
+echo ">>> Install dracut in ${SFSDIR}/ ..."
+time moss -D ${SFSDIR} install "${initrd[@]}" -y || die_and_cleanup "Failed to install initrd packages!"
 
-mount -t overlay -o lowerdir=$(pwd)/mount,upperdir=$(pwd)/overlay.upper,workdir=$(pwd)/overlay.work,redirect_dir=on overlay overlay.mount || die "Failed to mount overlay"
+echo ">>> Regenerate dracut..."
+kver=$(ls ${SFSDIR}/usr/lib/modules)
+time moss-container -u 0 -d ${SFSDIR}/ -- dracut --early-microcode --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd
+mv -v ${SFSDIR}/initrd ${BOOT}/initrd
 
-# Install dracut now
-moss -D overlay.mount install "${initrd[@]}" -y || die "Failed to install overlay packages"
+echo ">>> Clean up ${SFSDIR}/ ..."
+time moss -D ${SFSDIR} remove "${initrd[@]}" -y || die_and_cleanup "Failed to remove initrd packages from ${TMPFS}/ !"
+time moss -D ${SFSDIR} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
 
-# Regenerate dracut. BLUH.
-kver=$(ls mount/usr/lib/modules)
-moss-container -u 0 -d overlay.mount/ -- dracut --early-microcode --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd
-cp -v overlay.mount/initrd boot/initrd
+# Keep only latest state (= currently installed)
+time moss -D ${SFSDIR} state prune -k1 -y || die_and_cleanup "Failed to prune moss state in ${TMPFS}/ !"
+# Remove downloaded .stones
+rm -rf ${SFSDIR}/.moss/cache/downloads/*
 
-# Tear it down
-umount $(pwd)/overlay.mount
+SFSSIZE=$(du -BMiB -s ${TMPFS}|cut -f1|sed -e 's|MiB||g')
+echo ">>> ${SFSDIR} size: ${SFSSIZE} MiB"
 
-# Cleanup!
-rm -rf mount/.moss/cache/downloads/*
-umount $(pwd)/mount
+echo ">>> Generate the LiveOS image structure..."
+mkdir -pv ${TMPFS}/root/LiveOS/
 
-# Shrink size to minimum
-resize2fs -M rootfs.img -f
+# Show the contents that will get included to satisfy ourselves that the source dirs specified below are sufficient
+ls -la ${SFSDIR}/
+# Use lz4 compression to make it easier to spot size improvements/regressions during development
+time mksquashfs ${SFSDIR}/* ${SFSDIR}/.moss ${TMPFS}/root/LiveOS/squashfs.img \
+  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp lz4 #-Xhc # yields 10% extra compression
 
-# Force a check on it
-e2fsck -fy rootfs.img
+# Use zstd -19 for compressing release images, -3 for compressing quickly with better ratio than lz4 (default is 15)
+#time mksquashfs ${SFSDIR}/* ${SFSDIR}/.moss ${TMPFS}/root/LiveOS/squashfs.img \
+#  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp zstd -Xcompression-level 3
 
-# Now gen the structure
+echo ">>> Create and mount the efi.img backing file..."
+fallocate -l 45M ${TMPFS}/efi.img
+mkfs.vfat -F 12 ${TMPFS}/efi.img -n EFIBOOTISO
+mount -vo loop ${TMPFS}/efi.img ${MOUNT}
 
-mkdir -pv LiveOS
-mv -v rootfs.img LiveOS/.
-mksquashfs LiveOS/ squashfs.img -comp zstd -root-becomes LiveOS -keep-as-directory -all-root
-rm -f LiveOS/rootfs.img
-mv -v squashfs.img LiveOS/.
-
-mkdir -pv root
-mv -v LiveOS root/.
-
-# Create the efi img
-fallocate -l 45M efi.img
-mkfs.vfat -F 12 efi.img -n EFIBOOTISO
-mount -o loop efi.img mount
-
-# Set it up...
-mkdir -pv mount/EFI/Boot
-cp -v boot/bootx64.efi mount/EFI/Boot/bootx64.efi
+echo ">>> Set up EFI image..."
+mkdir -pv ${MOUNT}/EFI/Boot/
+cp -v ${BOOT}/bootx64.efi ${MOUNT}/EFI/Boot/bootx64.efi
 sync
-mkdir -pv mount/loader/entries
-cp -v live-os.conf mount/loader/entries/.
-cp -v boot/kernel mount/kernel
-cp -v boot/initrd mount/initrd
-umount $(pwd)/mount
+mkdir -pv ${MOUNT}/loader/entries/
+cp -v ${WORK}/live-os.conf ${MOUNT}/loader/entries/
+cp -v ${BOOT}/kernel ${MOUNT}/
+cp -v ${BOOT}/initrd ${MOUNT}/
+umount -Rlv ${MOUNT}
 
-# Put it in place
-mkdir -pv root/EFI/Boot
-mv -v efi.img root/EFI/Boot/efiboot.img
+echo ">>> Put the new EFI image in the correct place..."
+mkdir -pv ${TMPFS}/root/EFI/Boot
+cp -v ${TMPFS}/efi.img ${TMPFS}/root/EFI/Boot/efiboot.img
 
-# Create the ISO
+echo ">>> Create the ISO file..."
 xorriso -as mkisofs \
-    -o snekvalidator.iso \
+    -o ${WORK}/snekvalidator.iso \
     -R -J -v -d -N \
     -x snekvalidator.iso \
     -hide-rr-moved \
@@ -195,6 +190,13 @@ xorriso -as mkisofs \
     -eltorito-boot EFI/Boot/efiboot.img \
     -isohybrid-gpt-basdat \
     -V "SERPENTISO" -A "SERPENTISO" \
-    root
+    ${TMPFS}/root
 
-# TODO: Generate an ISO
+cleanup
+
+unset RUST_BACKTRACE
+unset BOOT
+unset SFSDIR
+unset MOUNT
+unset TMPFS
+unset WORK
