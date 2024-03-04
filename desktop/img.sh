@@ -149,38 +149,19 @@ time moss -D ${SFSDIR} state prune -k1 -y || die_and_cleanup "Failed to prune mo
 # Remove downloaded .stones
 rm -rf ${SFSDIR}/.moss/cache/downloads/*
 
-#cp -avx ${TMPFS}/* ${TMPFS}/.moss ${MOUNT}/ # <- segfaults for me on Solus
-echo ">>> Transfer ${SFSDIR}/ contents to rootfs.img mounted on ${MOUNT}/ ..."
+
 IMGSIZE=$(du -BMiB -s ${TMPFS}|cut -f1|sed -e 's|MiB||g')
 echo ">>> ${SFSDIR} size: ${IMGSIZE} MiB"
-# Set up the root image to be twice as large as the SFS folder total size in MiB
-fallocate -l $((${IMGSIZE} * 2))MiB ${TMPFS}/rootfs.img
-# don't want/need journaling on the fs
-mkfs.ext3 -F ${TMPFS}/rootfs.img
-mount -vo loop ${TMPFS}/rootfs.img ${MOUNT}
-
-time tar -C ${SFSDIR} -cf - ./  | tar -C ${MOUNT} --totals --checkpoint=20000 -xpf -
-# save tmpfs memory once the FS has been created
-rm -rf ${SFSDIR}
-umount -Rlv ${MOUNT}/
-
-echo ">>> Shrink rootfs.img size to minimum..."
-resize2fs -Mfp ${TMPFS}/rootfs.img
-
-echo ">>> Force a filesystem check on rootfs.img..."
-e2fsck -fvy ${TMPFS}/rootfs.img
 
 echo ">>> Generate the LiveOS image structure..."
 mkdir -pv ${TMPFS}/LiveOS
-ln -v ${TMPFS}/rootfs.img ${TMPFS}/LiveOS/
 
 # Use zstd -19 for compressing release images, -3 for compressing quickly with better ratio than lz4
 #time mksquashfs ${WORK}/LiveOS/ ${WORK}/squashfs.img -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp zstd #-Xcompression-level 3 # default is 15
 
 # Use lz4 compression to make it easier to spot size improvements/regressions during development
-time mksquashfs ${TMPFS}/LiveOS/ ${TMPFS}/squashfs.img -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp lz4 #-Xhc # yields 10% extra compression
+time mksquashfs ${SFSDIR}/ ${TMPFS}/squashfs.img -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp lz4 #-Xhc # yields 10% extra compression
 
-rm -f ${TMPFS}/LiveOS/rootfs.img
 ln -v ${TMPFS}/squashfs.img ${TMPFS}/LiveOS/
 
 mkdir -pv ${TMPFS}/root
