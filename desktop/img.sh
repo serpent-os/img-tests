@@ -26,19 +26,14 @@ TMPFS="/tmp/serpent_iso"
 echo ">>> tmpfs dir \${TMPFS}: ${TMPFS}"
 
 BINARIES=(
-    e2fsck
     fallocate
-    lz4
-    mkfs.ext3
     mkfs.vfat
     mksquashfs
     moss
     moss-container
     mount
-    resize2fs
     sync
     xorriso
-    zstd
 )
 # up front check for necessary binaries
 BINARY_NOT_FOUND=0
@@ -79,10 +74,10 @@ cleanup () {
     rm -rf ${TMPFS}/*
 
     # umount existing mount recursively and lazily
-    test -d ${TMPFS}/mount && umount -Rlv ${TMPFS}/mount
+    test -d ${TMPFS}/* && umount -Rlv ${TMPFS}/*
 
-    # clean up existing rootfs.img
-    test -e ${TMPFS}/rootfs.img && rm -f ${TMPFS}/rootfs.img
+    # clean leftover existing *.img
+    test -e ${TMPFS}/*.img && rm -f ${TMPFS}/*.img
 }
 cleanup
 
@@ -149,42 +144,40 @@ time moss -D ${SFSDIR} state prune -k1 -y || die_and_cleanup "Failed to prune mo
 # Remove downloaded .stones
 rm -rf ${SFSDIR}/.moss/cache/downloads/*
 
-
-IMGSIZE=$(du -BMiB -s ${TMPFS}|cut -f1|sed -e 's|MiB||g')
-echo ">>> ${SFSDIR} size: ${IMGSIZE} MiB"
+SFSSIZE=$(du -BMiB -s ${TMPFS}|cut -f1|sed -e 's|MiB||g')
+echo ">>> ${SFSDIR} size: ${SFSSIZE} MiB"
 
 echo ">>> Generate the LiveOS image structure..."
-mkdir -pv ${TMPFS}/LiveOS
+mkdir -pv ${TMPFS}/root/LiveOS/
 
-# Use zstd -19 for compressing release images, -3 for compressing quickly with better ratio than lz4
-#time mksquashfs ${WORK}/LiveOS/ ${WORK}/squashfs.img -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp zstd #-Xcompression-level 3 # default is 15
-
+# Show the contents that will get included to satisfy ourselves that the source dirs specified below are sufficient
+ls -la ${SFSDIR}/
 # Use lz4 compression to make it easier to spot size improvements/regressions during development
-time mksquashfs ${SFSDIR}/ ${TMPFS}/squashfs.img -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp lz4 #-Xhc # yields 10% extra compression
+time mksquashfs ${SFSDIR}/* ${SFSDIR}/.moss ${TMPFS}/root/LiveOS/squashfs.img \
+  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp lz4 #-Xhc # yields 10% extra compression
 
-ln -v ${TMPFS}/squashfs.img ${TMPFS}/LiveOS/
+# Use zstd -19 for compressing release images, -3 for compressing quickly with better ratio than lz4 (default is 15)
+#time mksquashfs ${SFSDIR}/* ${SFSDIR}/.moss ${TMPFS}/root/LiveOS/squashfs.img \
+#  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp zstd -Xcompression-level 3
 
-mkdir -pv ${TMPFS}/root
-mv -v ${TMPFS}/LiveOS ${TMPFS}/root/.
-
-echo ">>> Create and mount the efi.mg backing file..."
+echo ">>> Create and mount the efi.img backing file..."
 fallocate -l 45M ${TMPFS}/efi.img
 mkfs.vfat -F 12 ${TMPFS}/efi.img -n EFIBOOTISO
 mount -vo loop ${TMPFS}/efi.img ${MOUNT}
 
 echo ">>> Set up EFI image..."
-mkdir -pv ${TMPFS}/mount/EFI/Boot
+mkdir -pv ${MOUNT}/EFI/Boot/
 cp -v ${BOOT}/bootx64.efi ${MOUNT}/EFI/Boot/bootx64.efi
 sync
-mkdir -pv ${TMPFS}/mount/loader/entries
-cp -v ${WORK}/live-os.conf ${MOUNT}/loader/entries/.
-cp -v ${BOOT}/kernel ${MOUNT}/kernel
-cp -v ${BOOT}/initrd ${MOUNT}/initrd
+mkdir -pv ${MOUNT}/loader/entries/
+cp -v ${WORK}/live-os.conf ${MOUNT}/loader/entries/
+cp -v ${BOOT}/kernel ${MOUNT}/
+cp -v ${BOOT}/initrd ${MOUNT}/
 umount -Rlv ${MOUNT}
 
 echo ">>> Put the new EFI image in the correct place..."
 mkdir -pv ${TMPFS}/root/EFI/Boot
-ln -v ${TMPFS}/efi.img ${TMPFS}/root/EFI/Boot/efiboot.img
+cp -v ${TMPFS}/efi.img ${TMPFS}/root/EFI/Boot/efiboot.img
 
 echo ">>> Create the ISO file..."
 xorriso -as mkisofs \
