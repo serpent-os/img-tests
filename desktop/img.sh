@@ -11,19 +11,19 @@ die () {
     exit 1
 }
 
-WORK="$(dirname $(realpath $0))"
-echo ">>> workdir \${WORK}: ${WORK}"
-TMPFS="/tmp/serpent_iso"
-echo ">>> tmpfs dir \${TMPFS}: ${TMPFS}"
+# Root check
+if [[ "${UID}" -ne 0 ]]; then
+    die "\nThis script MUST be run as root.\n"
+fi
 
 # Add escape codes for color
 RED='\033[0;31m'
 RESET='\033[0m'
 
-# Root check
-if [[ "${UID}" -ne 0 ]]; then
-    die "\nThis script MUST be run as root.\n"
-fi
+WORK="$(dirname $(realpath $0))"
+echo ">>> workdir \${WORK}: ${WORK}"
+TMPFS="/tmp/serpent_iso"
+echo ">>> tmpfs dir \${TMPFS}: ${TMPFS}"
 
 BINARIES=(
     e2fsck
@@ -59,7 +59,6 @@ if [[ ${BINARY_NOT_FOUND} -gt 0 ]]; then
 else
     echo -e "\nAll necessary binaries found, generating Serpent OS linux-desktop ISO image...\n"
 fi
-#die "Exit because this is just a test."
 
 # Pkg list check
 test -f ${WORK}/pkglist || die "\nThis script MUST be run from within the desktop/ dir with the ./pkglist file.\n"
@@ -71,19 +70,8 @@ readarray -t PACKAGES < ${WORK}/../pkglist-base
 # add linux-desktop specific packages
 PACKAGES+=($(cat ${WORK}/pkglist))
 
-#echo -e "List of packages:\n${PACKAGES[@]}\n"
-#exit 1
-
 test -f ${WORK}/initrdlist || die "initrd package list is absent"
 readarray -t initrd < ${WORK}/initrdlist
-
-DIRS=(
-    LiveOS
-    boot
-    mount
-    root
-    serpentfs
-)
 
 cleanup () {
     echo -e "\nCleaning up existing dirs, files and mount points...\n"
@@ -98,7 +86,7 @@ cleanup () {
 }
 cleanup
 
-die-and-cleanup() {
+die_and_cleanup() {
     cleanup
     die $*
 }
@@ -122,10 +110,10 @@ chmod -Rc u=rwX,g=rX,o=rX ${MOUNT} ${SFSDIR}
 export RUST_BACKTRACE=1
 
 echo ">>> Add moss volatile repository to ${SFSDIR}/ ..."
-time moss -D ${SFSDIR} repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index || die-and-cleanup "Adding moss repo failed!"
+time moss -D ${SFSDIR} repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index || die_and_cleanup "Adding moss repo failed!"
 
 echo ">>> Install packages to ${SFSDIR}/ ..."
-time moss -D ${SFSDIR} install -y "${PACKAGES[@]}" || die-and-cleanup "Installing packages failed!"
+time moss -D ${SFSDIR} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
 
 echo ">>> Fix ldconfig in ${SFSDIR}/ ..."
 mkdir -pv ${SFSDIR}/var/cache/ldconfig
@@ -145,7 +133,7 @@ cp -av ${SFSDIR}/usr/lib/systemd/boot/efi/systemd-bootx64.efi ${BOOT}/bootx64.ef
 cp -av ${SFSDIR}/usr/lib/kernel/com.serpentos.* ${BOOT}/kernel
 
 echo ">>> Install dracut in ${SFSDIR}/ ..."
-time moss -D ${SFSDIR} install "${initrd[@]}" -y || die-and-cleanup "Failed to install initrd packages!"
+time moss -D ${SFSDIR} install "${initrd[@]}" -y || die_and_cleanup "Failed to install initrd packages!"
 
 echo ">>> Regenerate dracut..."
 kver=$(ls ${SFSDIR}/usr/lib/modules)
@@ -153,18 +141,18 @@ time moss-container -u 0 -d ${SFSDIR}/ -- dracut --early-microcode --hardlink -N
 mv -v ${SFSDIR}/initrd ${BOOT}/initrd
 
 echo ">>> Clean up ${SFSDIR}/ ..."
-time moss -D ${SFSDIR} remove "${initrd[@]}" -y || die-and-cleanup "Failed to remove initrd packages from ${TMPFS}/ !"
-time moss -D ${SFSDIR} install -y "${PACKAGES[@]}" || die-and-cleanup "Installing packages failed!"
+time moss -D ${SFSDIR} remove "${initrd[@]}" -y || die_and_cleanup "Failed to remove initrd packages from ${TMPFS}/ !"
+time moss -D ${SFSDIR} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
 
 # Keep only latest state (= currently installed)
-time moss -D ${SFSDIR} state prune -k1 -y || die-and-cleanup "Failed to prune moss state in ${TMPFS}/ !"
+time moss -D ${SFSDIR} state prune -k1 -y || die_and_cleanup "Failed to prune moss state in ${TMPFS}/ !"
 # Remove downloaded .stones
 rm -rf ${SFSDIR}/.moss/cache/downloads/*
 
 #cp -avx ${TMPFS}/* ${TMPFS}/.moss ${MOUNT}/ # <- segfaults for me on Solus
 echo ">>> Transfer ${SFSDIR}/ contents to rootfs.img mounted on ${MOUNT}/ ..."
 IMGSIZE=$(du -BMiB -s ${TMPFS}|cut -f1|sed -e 's|MiB||g')
-echo ">>> IMAGSIZE=${IMGSIZE}"
+echo ">>> ${SFSDIR} size: ${IMGSIZE} MiB"
 # Set up the root image to be twice as large as the SFS folder total size in MiB
 fallocate -l $((${IMGSIZE} * 2))MiB ${TMPFS}/rootfs.img
 # don't want/need journaling on the fs
@@ -172,7 +160,7 @@ mkfs.ext3 -F ${TMPFS}/rootfs.img
 mount -vo loop ${TMPFS}/rootfs.img ${MOUNT}
 
 time tar -C ${SFSDIR} -cf - ./  | tar -C ${MOUNT} --totals --checkpoint=20000 -xpf -
-# save memory once the FS has been created
+# save tmpfs memory once the FS has been created
 rm -rf ${SFSDIR}
 umount -Rlv ${MOUNT}/
 
@@ -185,8 +173,13 @@ e2fsck -fvy ${TMPFS}/rootfs.img
 echo ">>> Generate the LiveOS image structure..."
 mkdir -pv ${TMPFS}/LiveOS
 ln -v ${TMPFS}/rootfs.img ${TMPFS}/LiveOS/
+
+# Use zstd -19 for compressing release images, -3 for compressing quickly with better ratio than lz4
 #time mksquashfs ${WORK}/LiveOS/ ${WORK}/squashfs.img -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp zstd #-Xcompression-level 3 # default is 15
+
+# Use lz4 compression to make it easier to spot size improvements/regressions during development
 time mksquashfs ${TMPFS}/LiveOS/ ${TMPFS}/squashfs.img -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp lz4 #-Xhc # yields 10% extra compression
+
 rm -f ${TMPFS}/LiveOS/rootfs.img
 ln -v ${TMPFS}/squashfs.img ${TMPFS}/LiveOS/
 
@@ -210,7 +203,7 @@ umount -Rlv ${MOUNT}
 
 echo ">>> Put the new EFI image in the correct place..."
 mkdir -pv ${TMPFS}/root/EFI/Boot
-mv -v ${TMPFS}/efi.img ${TMPFS}/root/EFI/Boot/efiboot.img
+ln -v ${TMPFS}/efi.img ${TMPFS}/root/EFI/Boot/efiboot.img
 
 echo ">>> Create the ISO file..."
 xorriso -as mkisofs \
@@ -227,7 +220,7 @@ xorriso -as mkisofs \
 
 cleanup
 
-unset RUST_BACKTRACE=1
+unset RUST_BACKTRACE
 unset BOOT
 unset SFSDIR
 unset MOUNT
