@@ -90,8 +90,12 @@ die_and_cleanup() {
 set -e
 
 export BOOT="${TMPFS}/boot"
+export CACHE="${WORK}/cached_stones"
 export MOUNT="${TMPFS}/mount"
 export SFSDIR="${TMPFS}/serpentfs"
+
+# Use a permanent cache for downloaded .stones
+mkdir -pv ${CACHE}
 
 # Stash boot assets
 mkdir -pv ${BOOT}
@@ -104,11 +108,13 @@ chmod -Rc u=rwX,g=rX,o=rX ${MOUNT} ${SFSDIR}
 
 export RUST_BACKTRACE=1
 
+export MOSS="moss -D ${SFSDIR} --cache ${CACHE}" 
+
 echo ">>> Add moss volatile repository to ${SFSDIR}/ ..."
-time moss -D ${SFSDIR} repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index || die_and_cleanup "Adding moss repo failed!"
+time ${MOSS} repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index || die_and_cleanup "Adding moss repo failed!"
 
 echo ">>> Install packages to ${SFSDIR}/ ..."
-time moss -D ${SFSDIR} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
+time ${MOSS} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
 
 echo ">>> Fix ldconfig in ${SFSDIR}/ ..."
 mkdir -pv ${SFSDIR}/var/cache/ldconfig
@@ -128,7 +134,7 @@ cp -av ${SFSDIR}/usr/lib/systemd/boot/efi/systemd-bootx64.efi ${BOOT}/bootx64.ef
 cp -av ${SFSDIR}/usr/lib/kernel/com.serpentos.* ${BOOT}/kernel
 
 echo ">>> Install dracut in ${SFSDIR}/ ..."
-time moss -D ${SFSDIR} install "${initrd[@]}" -y || die_and_cleanup "Failed to install initrd packages!"
+time ${MOSS} install "${initrd[@]}" -y || die_and_cleanup "Failed to install initrd packages!"
 
 echo ">>> Regenerate dracut..."
 kver=$(ls ${SFSDIR}/usr/lib/modules)
@@ -136,12 +142,12 @@ time moss-container -u 0 -d ${SFSDIR}/ -- dracut --early-microcode --hardlink -N
 mv -v ${SFSDIR}/initrd ${BOOT}/initrd
 
 echo ">>> Clean up ${SFSDIR}/ ..."
-time moss -D ${SFSDIR} remove "${initrd[@]}" -y || die_and_cleanup "Failed to remove initrd packages from ${TMPFS}/ !"
-time moss -D ${SFSDIR} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
+time ${MOSS} remove "${initrd[@]}" -y || die_and_cleanup "Failed to remove initrd packages from ${TMPFS}/ !"
+time ${MOSS} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
 
 # Keep only latest state (= currently installed)
-time moss -D ${SFSDIR} state prune -k1 -y || die_and_cleanup "Failed to prune moss state in ${TMPFS}/ !"
-# Remove downloaded .stones
+time ${MOSS} state prune -k1 -y || die_and_cleanup "Failed to prune moss state in ${TMPFS}/ !"
+# Remove downloaded .stones to lower size of generated ISO
 rm -rf ${SFSDIR}/.moss/cache/downloads/*
 
 SFSSIZE=$(du -BMiB -s ${TMPFS}|cut -f1|sed -e 's|MiB||g')
@@ -194,9 +200,11 @@ xorriso -as mkisofs \
 
 cleanup
 
-unset RUST_BACKTRACE
 unset BOOT
-unset SFSDIR
+unset CACHE
+unset MOSS
 unset MOUNT
+unset RUST_BACKTRACE
+unset SFSDIR
 unset TMPFS
 unset WORK

@@ -2,6 +2,7 @@ boot/
 mount/
 root/
 sosroot/
+cached_stones/
 *.img
 *.iso
 overlay.*
