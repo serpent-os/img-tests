@@ -65,7 +65,7 @@ readarray -t PACKAGES < ${WORK}/../pkglist-base
 # add linux-desktop specific packages
 PACKAGES+=($(cat ${WORK}/pkglist))
 
-test -f ${WORK}/initrdlist || die "initrd package list is absent"
+test -f ${WORK}/initrdlist || die "\nThis script MUST be run from within the desktop/ dir with the ./initrd file.\n"
 readarray -t initrd < ${WORK}/initrdlist
 
 cleanup () {
@@ -141,12 +141,10 @@ kver=$(ls ${SFSDIR}/usr/lib/modules)
 time moss-container -u 0 -d ${SFSDIR}/ -- dracut --early-microcode --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd
 mv -v ${SFSDIR}/initrd ${BOOT}/initrd
 
-echo ">>> Clean up ${SFSDIR}/ ..."
-time ${MOSS} remove "${initrd[@]}" -y || die_and_cleanup "Failed to remove initrd packages from ${TMPFS}/ !"
-time ${MOSS} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
+echo ">>> Roll back and prune to keep only initially installed state and remove downloads ..."
+time ${MOSS} state activate 1 -y || die_and_cleanup "Failed to activate initial state in ${TMPFS}/ !"
+time ${MOSS} state prune -k 1 --include-newer -y || die_and_cleanup "Failed to prune moss state in ${TMPFS}/ !"
 
-# Keep only latest state (= currently installed)
-time ${MOSS} state prune -k1 -y || die_and_cleanup "Failed to prune moss state in ${TMPFS}/ !"
 # Remove downloaded .stones to lower size of generated ISO
 rm -rf ${SFSDIR}/.moss/cache/downloads/*
 
