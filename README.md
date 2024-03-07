@@ -5,7 +5,7 @@
 As Serpent OS is under heavy development, the image generation scripts in this repository are provided as is,
 with no explicit or implied warranty or support.
 
-If you break your computer because you used these scripts or Serpent OS in its current, you get to keep both pieces.
+If you break your computer because you used these scripts or Serpent OS in its current state, you get to keep both pieces.
 
 ## Create systemd-nspawn compatible `./sosroot` install
 
