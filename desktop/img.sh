@@ -156,13 +156,18 @@ mkdir -pv ${TMPFS}/root/LiveOS/
 
 # Show the contents that will get included to satisfy ourselves that the source dirs specified below are sufficient
 ls -la ${SFSDIR}/
+
 # Use lz4 compression to make it easier to spot size improvements/regressions during development
 time mksquashfs ${SFSDIR}/* ${SFSDIR}/.moss ${TMPFS}/root/LiveOS/squashfs.img \
   -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp lz4 #-Xhc # yields 10% extra compression
 
 # Use zstd -19 for compressing release images, -3 for compressing quickly with better ratio than lz4 (default is 15)
 #time mksquashfs ${SFSDIR}/* ${SFSDIR}/.moss ${TMPFS}/root/LiveOS/squashfs.img \
-#  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -info -progress -comp zstd -Xcompression-level 3
+#  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp zstd -Xcompression-level 19
+
+# Use xz for comparing with zstd -19 release images. Uses ELF trick to compress binary objects.
+#time mksquashfs ${SFSDIR}/* ${SFSDIR}/.moss ${TMPFS}/root/LiveOS/squashfs.img \
+#  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp xz -Xbcj x86
 
 echo ">>> Create and mount the efi.img backing file..."
 fallocate -l 45M ${TMPFS}/efi.img
