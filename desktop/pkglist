@@ -1,7 +1,6 @@
 sysbinary(gdm)
-binary(alacritty)
-liberation-fonts-ttf
 gnome-backgrounds
+gnome-console
 
 kmod
 linux-desktop
