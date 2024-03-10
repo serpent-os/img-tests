@@ -2,6 +2,7 @@ sysbinary(gdm)
 gnome-backgrounds
 gnome-console
 gnome-control-center
+font-hack
 font-noto-emoji
 
 kmod
