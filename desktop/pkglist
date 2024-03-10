@@ -1,6 +1,8 @@
 sysbinary(gdm)
 gnome-backgrounds
 gnome-console
+gnome-control-center
+font-noto-emoji
 
 kmod
 linux-desktop
