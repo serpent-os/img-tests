@@ -2,8 +2,11 @@ sysbinary(gdm)
 gnome-backgrounds
 gnome-console
 gnome-control-center
+gnome-text-editor
 font-hack
 font-noto-emoji
+loupe
+nautilus
 
 kmod
 linux-desktop
