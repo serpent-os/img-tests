@@ -13,7 +13,7 @@
 
 # target dirs
 # use a default sosroot
-SOSROOT="${DESTDIR:-./sosroot}"
+SOSROOT="${DESTDIR:-${PWD}/sosroot}"
 BOULDERCACHE="/var/cache/boulder"
 
 # utility functions
@@ -92,11 +92,11 @@ basicSetup () {
 
     MSG="Adding volatile serpent os repository..."
     printInfo "${MSG}"
-    sudo moss -D "${SOSROOT}" repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index -p0 || die "${MSG}"
+    sudo moss -D "${SOSROOT}" -y repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index -p0 || die "${MSG}"
 
     MSG="Installing packages..."
     printInfo "${MSG}"
-    sudo moss -D "${SOSROOT}" install "${PACKAGES[@]}" || die "${MSG}"
+    sudo moss -D "${SOSROOT}" -y --cache "${BOULDERCACHE}" install "${PACKAGES[@]}" || die "${MSG}"
 
     MSG="Setting up an empty root password by default..."
     printInfo "${MSG}"
@@ -108,15 +108,15 @@ basicSetup () {
 
     MSG="Preparing local-x86_64 profile directory..."
     printInfo "${MSG}"
-    sudo mkdir -pv ${BOULDERCACHE}/repos/local-x86_64/ || die "${MSG}"
+    sudo mkdir -pv ${SOSROOT}/${BOULDERCACHE}/repos/local-x86_64/ || die "${MSG}"
 
     MSG="Creating a moss stone.index file for the local-x86_64 profile..."
     printInfo "${MSG}"
-    sudo moss index ${BOULDERCACHE}/repos/local-x86_64/ || die "${MSG}"
+    sudo moss -y index ${SOSROOT}/${BOULDERCACHE}/repos/local-x86_64/ || die "${MSG}"
 
     MSG="Adding local-x86_64 profile to list of active repositories..."
     printInfo "${MSG}"
-    sudo moss -D "${SOSROOT}" repo add local-x86_64 file://${BOULDERCACHE}/repos/local-x86_64/stone.index -p10 || die "${MSG}"
+    sudo moss -D "${SOSROOT}" -y repo add local-x86_64 file://${BOULDERCACHE}/repos/local-x86_64/stone.index -p10 || die "${MSG}"
 }
 
 # clean up env

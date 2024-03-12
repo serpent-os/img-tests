@@ -7,7 +7,7 @@
 
 source ../basic-setup.sh
 
-SOSROOT="${VMDIR:-/mnt/serpentos}"
+SOSROOT="${VMDIR:-${PWD}/sosroot}"
 SOSNAME="${VMNAME:-serpentos}"
 ENABLE_SWAY="${ENABLE_SWAY:-false}"
 
@@ -70,15 +70,7 @@ if [ "${ENABLE_SWAY}" = "true" ]; then
     PACKAGES+=("sway")
 fi
 
-MSG="Un-mounting ${BOULDERCACHE}${SOSROOT} if necessary..."
-printInfo "${MSG}"
-sudo umount -vf "${SOSROOT}${BOULDERCACHE}"
-
 basicSetup
-
-MSG="Bind-mounting ${BOULDERCACHE} into ${SOSROOT}..."
-printInfo ${MSG}
-sudo mount -v -o bind /var/cache/boulder "${SOSROOT}${BOULDERCACHE}"
 
 MSG="Removing previous VM configuration..."
 printInfo "${MSG}"
@@ -89,7 +81,7 @@ fi
 
 MSG="Setting up virt-mananger ${SOSNAME} instance from template..."
 printInfo "${MSG}"
-FOUNDPAYLOAD="$(find /usr/share -name OVMF_CODE.fd |grep -i ovmf/)"
+FOUNDPAYLOAD="$(find /usr/share -name OVMF.fd |grep -i ovmf/)"
 # Defaults to the location in Solus
 UEFIPAYLOAD="${FOUNDPAYLOAD:-/usr/share/edk2-ovmf/x64/OVMF_CODE.fd}"
 MSG="Found \$UEFIPAYLOAD: ${UEFIPAYLOAD}..."
