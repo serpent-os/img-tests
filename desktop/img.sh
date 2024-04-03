@@ -30,9 +30,9 @@ BINARIES=(
     mkfs.vfat
     mksquashfs
     moss
-    moss-container
     mount
     sync
+    systemd-nspawn
     xorriso
 )
 # up front check for necessary binaries
@@ -93,6 +93,7 @@ export BOOT="${TMPFS}/boot"
 export CACHE="${WORK}/cached_stones"
 export MOUNT="${TMPFS}/mount"
 export SFSDIR="${TMPFS}/serpentfs"
+export CHROOT="systemd-nspawn --as-pid2 --private-users=identity --user=0 --quiet"
 
 # Use a permanent cache for downloaded .stones
 mkdir -pv ${CACHE}
@@ -118,16 +119,16 @@ time ${MOSS} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages
 
 echo ">>> Fix ldconfig in ${SFSDIR}/ ..."
 mkdir -pv ${SFSDIR}/var/cache/ldconfig
-time moss-container -u 0 -d ${SFSDIR} -- ldconfig
+time ${CHROOT} -D ${SFSDIR} ldconfig
 
 echo ">>> Set up basic environment in ${SFSDIR}/ ..."
-time moss-container -u 0 -d ${SFSDIR} -- systemd-sysusers
-time moss-container -u 0 -d ${SFSDIR} -- systemd-tmpfiles --create
-time moss-container -u 0 -d ${SFSDIR} -- systemd-firstboot --force --setup-machine-id --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash
-time moss-container -u 0 -d ${SFSDIR} -- systemctl enable systemd-resolved systemd-networkd getty@tty1
+time ${CHROOT} -D ${SFSDIR} systemd-sysusers && echo ">>>>> systemd-sysusers run done."
+time ${CHROOT} -D ${SFSDIR} systemd-tmpfiles --create && echo ">>>>> systemd-tmpfiles run done."
+time ${CHROOT} -D ${SFSDIR} systemd-firstboot --force --setup-machine-id --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash && echo ">>>>> systemd-firstboot run done."
+time ${CHROOT} -D ${SFSDIR} systemctl enable systemd-resolved systemd-networkd getty@tty1 && echo ">>>>> systemctl enable basic systemd services done."
 
 echo ">>> Fix performance issues. Needs packaging/merging by moss"
-time moss-container -u 0 -d ${SFSDIR} -- systemd-hwdb update
+time ${CHROOT} -D ${SFSDIR} systemd-hwdb update && echo ">>>>> systemd-hwdb update done."
 
 echo ">>> Extract assets..."
 cp -av ${SFSDIR}/usr/lib/systemd/boot/efi/systemd-bootx64.efi ${BOOT}/bootx64.efi
@@ -138,7 +139,7 @@ time ${MOSS} install "${initrd[@]}" -y || die_and_cleanup "Failed to install ini
 
 echo ">>> Regenerate dracut..."
 kver=$(ls ${SFSDIR}/usr/lib/modules)
-time moss-container -u 0 -d ${SFSDIR}/ -- dracut --early-microcode --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd
+time ${CHROOT} -D ${SFSDIR}/ dracut --early-microcode --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd
 mv -v ${SFSDIR}/initrd ${BOOT}/initrd
 
 echo ">>> Roll back and prune to keep only initially installed state and remove downloads ..."
@@ -203,11 +204,15 @@ xorriso -as mkisofs \
 
 cleanup
 
-unset BOOT
-unset CACHE
-unset MOSS
-unset MOUNT
-unset RUST_BACKTRACE
-unset SFSDIR
-unset TMPFS
-unset WORK
+for v in BOOT CACHE CHROOT MOSS MOUNT RUST_BACKTRACE SFSDIR TMPFS WORK; do
+    unset $v
+done
+# unset BOOT
+# unset CACHE
+# unset CHROOT
+# unset MOSS
+# unset MOUNT
+# unset RUST_BACKTRACE
+# unset SFSDIR
+# unset TMPFS
+# unset WORK
