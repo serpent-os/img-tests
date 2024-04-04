@@ -32,4 +32,5 @@ iproute2
 nss
 shadow
 systemd
+tzdata
 util-linux
