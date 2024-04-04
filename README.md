@@ -17,11 +17,11 @@ If you break your computer because you used these scripts or Serpent OS in its c
 
 ## Create virtiofs-based virt-manager VM install
 
-    cd virt-manager-vm
+    cd virt-manager-vm/
     ./create-virtio-vm.sh
 
-## Create QEMU-KVM ISO image
+## Create desktop ISO image
 
-    cd kvm
+    cd desktop/
     sudo ./img.sh
     qemu-system-x86_64 -enable-kvm -cdrom snekvalidator.iso -bios /usr/share/edk2-ovmf/x64/OVMF.fd -m 4096m -serial stdio
