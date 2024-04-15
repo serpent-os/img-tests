@@ -16,7 +16,7 @@
       <loader readonly="yes" type="pflash">###UEFIPAYLOAD###</loader>
       <kernel>###SOSROOT###/usr/lib/kernel/current.kernel</kernel>
       <initrd>###SOSROOT###/usr/lib/kernel/current.initrd</initrd>
-      <cmdline>rootfstype=virtiofs root=root rw quiet loglevel=3 rd.modules-load=virtio_pci</cmdline>
+      <cmdline>rootfstype=virtiofs root=root rw quiet loglevel=3 rd.modules-load=virtio_pci rd.vconsole.font=ter-v32n vconsole.font=ter-v32n</cmdline>
       <boot dev="hd"/>
     </os>
     <features>
