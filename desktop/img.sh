@@ -56,28 +56,28 @@ else
 fi
 
 # Pkg list check
-test -f ${WORK}/pkglist || die "\nThis script MUST be run from within the desktop/ dir with the ./pkglist file.\n"
-test -f ${WORK}/../pkglist-base || die "\nThis script MUST be able to find the ../pkglist-base file.\n"
+test -f "${WORK}/pkglist" || die "\nThis script MUST be run from within the desktop/ dir with the ./pkglist file.\n"
+test -f "${WORK}/../pkglist-base" || die "\nThis script MUST be able to find the ../pkglist-base file.\n"
 
 # start with a common base of packages
-readarray -t PACKAGES < ${WORK}/../pkglist-base
+readarray -t PACKAGES < "${WORK}/../pkglist-base"
 
 # add linux-desktop specific packages
-PACKAGES+=($(cat ${WORK}/pkglist))
+PACKAGES+=($(cat "${WORK}/pkglist"))
 
 test -f ${WORK}/initrdlist || die "\nThis script MUST be run from within the desktop/ dir with the ./initrd file.\n"
-readarray -t initrd < ${WORK}/initrdlist
+readarray -t initrd < "${WORK}/initrdlist"
 
 cleanup () {
     echo -e "\nCleaning up existing dirs, files and mount points...\n"
     # clean up dirs
-    rm -rf ${TMPFS}/*
+    rm -rf "${TMPFS}"/*
 
     # umount existing mount recursively and lazily
-    test -d ${TMPFS}/* && umount -Rlv ${TMPFS}/*
+    test -d "${TMPFS}"/* && umount -Rlv "${TMPFS}"/*
 
     # clean leftover existing *.img
-    test -e ${TMPFS}/*.img && rm -f ${TMPFS}/*.img
+    test -e "${TMPFS}"/*.img && rm -f "${TMPFS}"/*.img
 }
 cleanup
 
@@ -96,16 +96,16 @@ export SFSDIR="${TMPFS}/serpentfs"
 export CHROOT="systemd-nspawn --as-pid2 --private-users=identity --user=0 --quiet"
 
 # Use a permanent cache for downloaded .stones
-mkdir -pv ${CACHE}
+mkdir -pv "${CACHE}"
 
 # Stash boot assets
-mkdir -pv ${BOOT}
+mkdir -pv "${BOOT}"
 
 # Get it right first time.
-mkdir -pv ${MOUNT} ${SFSDIR}
-chown -Rc root:root ${MOUNT} ${SFSDIR}
+mkdir -pv "${MOUNT}" "${SFSDIR}"
+chown -Rc root:root "${MOUNT}" "${SFSDIR}"
 # Only chmod directories
-chmod -Rc u=rwX,g=rX,o=rX ${MOUNT} ${SFSDIR}
+chmod -Rc u=rwX,g=rX,o=rX "${MOUNT}" "${SFSDIR}"
 
 export RUST_BACKTRACE=1
 
@@ -118,80 +118,80 @@ echo ">>> Install packages to ${SFSDIR}/ ..."
 time ${MOSS} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
 
 echo ">>> Fix ldconfig in ${SFSDIR}/ ..."
-mkdir -pv ${SFSDIR}/var/cache/ldconfig
-time ${CHROOT} -D ${SFSDIR} ldconfig
+mkdir -pv "${SFSDIR}/var/cache/ldconfig"
+time ${CHROOT} -D "${SFSDIR}" ldconfig
 
 echo ">>> Set up basic environment in ${SFSDIR}/ ..."
-time ${CHROOT} -D ${SFSDIR} systemd-sysusers && echo ">>>>> systemd-sysusers run done."
-time ${CHROOT} -D ${SFSDIR} systemd-tmpfiles --create && echo ">>>>> systemd-tmpfiles run done."
-time ${CHROOT} -D ${SFSDIR} systemd-firstboot --force --setup-machine-id --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash && echo ">>>>> systemd-firstboot run done."
-time ${CHROOT} -D ${SFSDIR} systemctl enable systemd-resolved systemd-networkd getty@tty1 && echo ">>>>> systemctl enable basic systemd services done."
+time ${CHROOT} -D "${SFSDIR}" systemd-sysusers && echo ">>>>> systemd-sysusers run done."
+time ${CHROOT} -D "${SFSDIR}" systemd-tmpfiles --create && echo ">>>>> systemd-tmpfiles run done."
+time ${CHROOT} -D "${SFSDIR}" systemd-firstboot --force --setup-machine-id --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash && echo ">>>>> systemd-firstboot run done."
+time ${CHROOT} -D "${SFSDIR}" systemctl enable systemd-resolved systemd-networkd getty@tty1 && echo ">>>>> systemctl enable basic systemd services done."
 
 echo ">>> Fix performance issues. Needs packaging/merging by moss"
-time ${CHROOT} -D ${SFSDIR} systemd-hwdb update && echo ">>>>> systemd-hwdb update done."
+time ${CHROOT} -D "${SFSDIR}" systemd-hwdb update && echo ">>>>> systemd-hwdb update done."
 
 echo ">>> Extract assets..."
-cp -av ${SFSDIR}/usr/lib/systemd/boot/efi/systemd-bootx64.efi ${BOOT}/bootx64.efi
-cp -av ${SFSDIR}/usr/lib/kernel/com.serpentos.* ${BOOT}/kernel
+cp -av "${SFSDIR}/usr/lib/systemd/boot/efi/systemd-bootx64.efi" "${BOOT}/bootx64.efi"
+cp -av "${SFSDIR}"/usr/lib/kernel/com.serpentos.* "${BOOT}/kernel"
 
 echo ">>> Install dracut in ${SFSDIR}/ ..."
 time ${MOSS} install "${initrd[@]}" -y || die_and_cleanup "Failed to install initrd packages!"
 
 echo ">>> Regenerate dracut..."
-kver=$(ls ${SFSDIR}/usr/lib/modules)
-time ${CHROOT} -D ${SFSDIR}/ dracut --early-microcode --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd
-mv -v ${SFSDIR}/initrd ${BOOT}/initrd
+kver=$(ls "${SFSDIR}/usr/lib/modules")
+time ${CHROOT} -D "${SFSDIR}/" dracut --early-microcode --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd
+mv -v "${SFSDIR}/initrd" "${BOOT}/initrd"
 
 echo ">>> Roll back and prune to keep only initially installed state and remove downloads ..."
 time ${MOSS} state activate 1 -y || die_and_cleanup "Failed to activate initial state in ${TMPFS}/ !"
 time ${MOSS} state prune -k 1 --include-newer -y || die_and_cleanup "Failed to prune moss state in ${TMPFS}/ !"
 
 # Remove downloaded .stones to lower size of generated ISO
-rm -rf ${SFSDIR}/.moss/cache/downloads/*
+rm -rf "${SFSDIR}"/.moss/cache/downloads/*
 
 SFSSIZE=$(du -BMiB -s ${TMPFS}|cut -f1|sed -e 's|MiB||g')
 echo ">>> ${SFSDIR} size: ${SFSSIZE} MiB"
 
 echo ">>> Generate the LiveOS image structure..."
-mkdir -pv ${TMPFS}/root/LiveOS/
+mkdir -pv "${TMPFS}/root/LiveOS/"
 
 # Show the contents that will get included to satisfy ourselves that the source dirs specified below are sufficient
-ls -la ${SFSDIR}/
+ls -la "${SFSDIR}/"
 
 # Use lz4 compression to make it easier to spot size improvements/regressions during development
-time mksquashfs ${SFSDIR}/* ${SFSDIR}/.moss ${TMPFS}/root/LiveOS/squashfs.img \
+time mksquashfs "${SFSDIR}"/* "${SFSDIR}/.moss" "${TMPFS}/root/LiveOS/squashfs.img" \
   -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp lz4 #-Xhc # yields 10% extra compression
 
 # Use zstd -19 for compressing release images, -3 for compressing quickly with better ratio than lz4 (default is 15)
-#time mksquashfs ${SFSDIR}/* ${SFSDIR}/.moss ${TMPFS}/root/LiveOS/squashfs.img \
+#time mksquashfs "${SFSDIR}"/* "${SFSDIR}/.moss" "${TMPFS}/root/LiveOS/squashfs.img" \
 #  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp zstd -Xcompression-level 19
 
 # Use xz for comparing with zstd -19 release images. Uses ELF trick to compress binary objects.
-#time mksquashfs ${SFSDIR}/* ${SFSDIR}/.moss ${TMPFS}/root/LiveOS/squashfs.img \
+#time mksquashfs "${SFSDIR}"/* "${SFSDIR}/.moss" "${TMPFS}/root/LiveOS/squashfs.img" \
 #  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp xz -Xbcj x86
 
 echo ">>> Create and mount the efi.img backing file..."
-fallocate -l 45M ${TMPFS}/efi.img
-mkfs.vfat -F 12 ${TMPFS}/efi.img -n EFIBOOTISO
-mount -vo loop ${TMPFS}/efi.img ${MOUNT}
+fallocate -l 45M "${TMPFS}/efi.img"
+mkfs.vfat -F 12 "${TMPFS}/efi.img" -n EFIBOOTISO
+mount -vo loop "${TMPFS}/efi.img" "${MOUNT}"
 
 echo ">>> Set up EFI image..."
-mkdir -pv ${MOUNT}/EFI/Boot/
-cp -v ${BOOT}/bootx64.efi ${MOUNT}/EFI/Boot/bootx64.efi
+mkdir -pv "${MOUNT}/EFI/Boot/"
+cp -v "${BOOT}/bootx64.efi" "${MOUNT}/EFI/Boot/bootx64.efi"
 sync
-mkdir -pv ${MOUNT}/loader/entries/
-cp -v ${WORK}/live-os.conf ${MOUNT}/loader/entries/
-cp -v ${BOOT}/kernel ${MOUNT}/
-cp -v ${BOOT}/initrd ${MOUNT}/
-umount -Rlv ${MOUNT}
+mkdir -pv "${MOUNT}/loader/entries/"
+cp -v "${WORK}/live-os.conf" "${MOUNT}/loader/entries/"
+cp -v "${BOOT}/kernel" "${MOUNT}/"
+cp -v "${BOOT}/initrd" "${MOUNT}/"
+umount -Rlv "${MOUNT}"
 
 echo ">>> Put the new EFI image in the correct place..."
-mkdir -pv ${TMPFS}/root/EFI/Boot
-cp -v ${TMPFS}/efi.img ${TMPFS}/root/EFI/Boot/efiboot.img
+mkdir -pv "${TMPFS}/root/EFI/Boot"
+cp -v "${TMPFS}/efi.img" "${TMPFS}/root/EFI/Boot/efiboot.img"
 
 echo ">>> Create the ISO file..."
 xorriso -as mkisofs \
-    -o ${WORK}/snekvalidator.iso \
+    -o "${WORK}/snekvalidator.iso" \
     -R -J -v -d -N \
     -x snekvalidator.iso \
     -hide-rr-moved \
@@ -200,12 +200,12 @@ xorriso -as mkisofs \
     -eltorito-boot EFI/Boot/efiboot.img \
     -isohybrid-gpt-basdat \
     -V "SERPENTISO" -A "SERPENTISO" \
-    ${TMPFS}/root
+    "${TMPFS}/root"
 
 cleanup
 
 for v in BOOT CACHE CHROOT MOSS MOUNT RUST_BACKTRACE SFSDIR TMPFS WORK; do
-    unset $v
+    unset "${v}"
 done
 # unset BOOT
 # unset CACHE
