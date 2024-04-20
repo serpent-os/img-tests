@@ -8,13 +8,13 @@
 source ../basic-setup.sh
 
 SOSROOT="${VMDIR:-${PWD}/sosroot}"
-SOSNAME="${VMNAME:-serpentos}"
+SOSNAME="${VMNAME:-serpent_virtiofs}"
 ENABLE_SWAY="${ENABLE_SWAY:-false}"
 
 showStartMessage() {
     cat <<EOF
 
-You can now start a virtiofs machine via the virt-manager UI!
+You can now start the ${SOSNAME} VM via the virt-manager UI!
 
 ----
 
