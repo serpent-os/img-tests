@@ -74,6 +74,7 @@ EOF
 basicSetup () {
     # NB: This will fail if moss is an alias!
     local moss="$(command -v moss)"
+    printInfo "Using moss binary found here: ${moss} ($(${moss} version))"
 
     MSG="Removing old ${SOSROOT} directory..."
     printInfo "${MSG}"
