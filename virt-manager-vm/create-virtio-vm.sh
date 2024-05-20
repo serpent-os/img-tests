@@ -58,8 +58,8 @@ fi
 # Pkg list check
 checkPrereqs
 test -f ./pkglist || die "\nThis script MUST be run from within the virt-manager-vm/ dir with the ./pkglist file.\n"
-test -x /usr/bin/virsh || die "\n${0} assumes virsh is installed.\n"
-test -x /usr/bin/virt-manager || die "\n${0} assumes virt-manager is installed.\n"
+command -v virsh || die "\n${0} assumes that virsh is installed.\n"
+command -v virt-manager || die "\n${0} assumes that virt-manager is installed.\n"
 
 # start with a common base of packages
 readarray -t PACKAGES < ../pkglist-base
@@ -81,7 +81,7 @@ fi
 
 MSG="Setting up virt-mananger ${SOSNAME} instance from template..."
 printInfo "${MSG}"
-FOUNDPAYLOAD="$(find /usr/share -name OVMF_CODE.fd |grep -i ovmf/)"
+FOUNDPAYLOAD="$(find /usr/share -name OVMF_CODE.fd |& grep -i ovmf/)"
 # Defaults to the location in Solus
 UEFIPAYLOAD="${FOUNDPAYLOAD:-/usr/share/edk2-ovmf/x64/OVMF_CODE.fd}"
 MSG="Found \$UEFIPAYLOAD: ${UEFIPAYLOAD}..."
