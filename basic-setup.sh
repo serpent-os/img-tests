@@ -80,6 +80,10 @@ basicSetup () {
     printInfo "${MSG}"
     sudo rm -rf "${SOSROOT}" || die "${MSG}"
 
+    MSG="Making sure ${BOULDERCAHCE} directory exists..."
+    printInfo "${MSG}"
+    sudo mkdir -pv "${BOULDERCACHE}"
+
     MSG="Creating new ${SOSROOT} directory w/baselayout skeleton..."
     printInfo "${MSG}"
     sudo mkdir -pv "${SOSROOT}"/{etc,proc,run,sys,var,var/local,"${BOULDERCACHE}"} || die "${MSG}"
@@ -120,7 +124,7 @@ basicSetup () {
 
     MSG="Adding local-x86_64 profile to list of active repositories..."
     printInfo "${MSG}"
-    sudo ${moss} -D "${SOSROOT}" -y repo add local-x86_64 "file://${BOULDERCACHE}/repos/local-x86_64/stone.index" -p10 || die "${MSG}"
+    sudo chroot "${SOSROOT}" moss -y repo add local-x86_64 "file://${BOULDERCACHE}/repos/local-x86_64/stone.index" -p10 || die "${MSG}"
 }
 
 # clean up env
