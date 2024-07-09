@@ -14,9 +14,9 @@
     <os>
       <type arch="x86_64" machine="q35">hvm</type>
       <loader readonly="yes" type="pflash">###UEFIPAYLOAD###</loader>
-      <kernel>###SOSROOT###/usr/lib/kernel/current.kernel</kernel>
-      <initrd>###SOSROOT###/usr/lib/kernel/current.initrd</initrd>
-      <cmdline>rootfstype=virtiofs root=root rw rd.modules-load=virtio_pci rd.shell rd.vconsole.font=ter-v32n vconsole.font=ter-v32n</cmdline>
+      <kernel>###SOSROOT###/usr/lib/kernel/current.kvm.kernel</kernel>
+      <initrd>###SOSROOT###/usr/lib/kernel/current.kvm.initrd</initrd>
+      <cmdline>rootfstype=virtiofs root=root rw rd.modules-load=virtio_pci rd.shell vconsole.font=ter-v32n video=Virtual-1:1440x900MR</cmdline>
       <boot dev="hd"/>
     </os>
     <features>
