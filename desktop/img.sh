@@ -20,6 +20,32 @@ fi
 RED='\033[0;31m'
 RESET='\033[0m'
 
+declare -A COMPRESSION_ARGS
+# The default because it's fast and it's easy to spot regressions in size
+COMPRESSION_ARGS["lz4"]="lz4"
+# yields 10% extra compression
+COMPRESSION_ARGS["lz4hc"]="lz4 -Xhc"
+# Almost as quick as lz4 and a fair bit smaller
+COMPRESSION_ARGS["zstd3"]="zstd -Xcompression-level 3"
+# Good for release images
+COMPRESSION_ARGS["zstd19"]="zstd -Xcompression-level 19"
+# Only here for comparison with zstd -19
+COMPRESSION_ARGS["xz"]="xz -Xbcj x86"
+
+# Let the user set the COMPRESSION variable and document supported compressors in the README
+export COMPRESSOR="${COMPRESSION:-lz4}"
+
+if [[ -n "${COMPRESSION_ARGS[$COMPRESSOR]}" ]]; then
+    echo -e "\nISO Compression type: ${COMPRESSOR} (specify via 'sudo -E COMPRESSION=foo ./img.sh')\n"
+else
+    echo -e "You specified the compression type: $COMPRESSION\n"
+    echo "Valid compression types are:"
+    for key in ${!COMPRESSION_ARGS[@]}; do
+        echo "- $key"
+    done
+    die "\nInvalid compression type $COMPRESSION specified, exiting.\n"
+fi
+
 WORK="$(dirname $(realpath $0))"
 echo ">>> workdir \${WORK}: ${WORK}"
 TMPFS="/tmp/serpent_iso"
@@ -95,6 +121,8 @@ export MOUNT="${TMPFS}/mount"
 export SFSDIR="${TMPFS}/serpentfs"
 export CHROOT="systemd-nspawn --as-pid2 --private-users=identity --user=0 --quiet"
 
+
+
 # Use a permanent cache for downloaded .stones
 mkdir -pv "${CACHE}"
 
@@ -158,17 +186,9 @@ mkdir -pv "${TMPFS}/root/LiveOS/"
 # Show the contents that will get included to satisfy ourselves that the source dirs specified below are sufficient
 ls -la "${SFSDIR}/"
 
-# Use lz4 compression to make it easier to spot size improvements/regressions during development
+echo ">>> Compress the LiveOS squashfs.img using the ${COMPRESSOR} compression preset..."
 time mksquashfs "${SFSDIR}"/* "${SFSDIR}/.moss" "${TMPFS}/root/LiveOS/squashfs.img" \
-  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp lz4 #-Xhc # yields 10% extra compression
-
-# Use zstd -19 for compressing release images, -3 for compressing quickly with better ratio than lz4 (default is 15)
-#time mksquashfs "${SFSDIR}"/* "${SFSDIR}/.moss" "${TMPFS}/root/LiveOS/squashfs.img" \
-#  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp zstd -Xcompression-level 19
-
-# Use xz for comparing with zstd -19 release images. Uses ELF trick to compress binary objects.
-#time mksquashfs "${SFSDIR}"/* "${SFSDIR}/.moss" "${TMPFS}/root/LiveOS/squashfs.img" \
-#  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp xz -Xbcj x86
+  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp ${COMPRESSION_ARGS[$COMPRESSOR]}
 
 echo ">>> Create and mount the efi.img backing file..."
 fallocate -l 45M "${TMPFS}/efi.img"
@@ -202,17 +222,11 @@ xorriso -as mkisofs \
     -V "SERPENTISO" -A "SERPENTISO" \
     "${TMPFS}/root"
 
+echo "Successfully built $(ls -sh snekvalidator.iso) using $COMPRESSION compression."
+echo -e "\n(specify compression type via 'sudo -E COMPRESSION=lz4 ./img.sh')\n"
+
 cleanup
 
-for v in BOOT CACHE CHROOT MOSS MOUNT RUST_BACKTRACE SFSDIR TMPFS WORK; do
+for v in BOOT CACHE CHROOT COMPRESSOR MOSS MOUNT RUST_BACKTRACE SFSDIR TMPFS WORK; do
     unset "${v}"
 done
-# unset BOOT
-# unset CACHE
-# unset CHROOT
-# unset MOSS
-# unset MOUNT
-# unset RUST_BACKTRACE
-# unset SFSDIR
-# unset TMPFS
-# unset WORK
