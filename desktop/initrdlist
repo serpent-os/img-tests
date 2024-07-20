@@ -1,4 +1,5 @@
 binary(cpio)
+binary(dash)
 binary(grep)
 binary(gzip)
 binary(sed)
