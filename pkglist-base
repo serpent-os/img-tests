@@ -1,7 +1,6 @@
 bash-completion
 binary(bash)
 binary(boulder)
-binary(dash)
 binary(file)
 binary(find)
 binary(gawk)
