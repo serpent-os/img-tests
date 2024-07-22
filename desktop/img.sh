@@ -150,13 +150,17 @@ mkdir -pv "${SFSDIR}/var/cache/ldconfig"
 time ${CHROOT} -D "${SFSDIR}" ldconfig
 
 echo ">>> Set up basic environment in ${SFSDIR}/ ..."
-time ${CHROOT} -D "${SFSDIR}" systemd-sysusers && echo ">>>>> systemd-sysusers run done."
-time ${CHROOT} -D "${SFSDIR}" systemd-tmpfiles --create && echo ">>>>> systemd-tmpfiles run done."
 time ${CHROOT} -D "${SFSDIR}" systemd-firstboot --force --setup-machine-id --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash && echo ">>>>> systemd-firstboot run done."
-time ${CHROOT} -D "${SFSDIR}" systemctl enable systemd-resolved systemd-networkd getty@tty1 && echo ">>>>> systemctl enable basic systemd services done."
+time ${CHROOT} -D "${SFSDIR}" systemctl enable getty@tty1 && echo ">>>>> systemctl enable basic systemd services done."
 
 echo ">>> Fix performance issues. Needs packaging/merging by moss"
 time ${CHROOT} -D "${SFSDIR}" systemd-hwdb update && echo ">>>>> systemd-hwdb update done."
+
+echo ">>> Configuring live user."
+time ${CHROOT} -D "${SFSDIR}" useradd -c "Live User" -d "/home/live" -G "disk,audio,adm,wheel,render,input,users" -m -U -s "/usr/bin/bash" live
+cp -R ${WORK}/rootfs_extra/etc/* "${SFSDIR}/etc/."
+chown -R root:root "${SFSDIR}/etc"
+${CHROOT} -D "${SFSDIR}" chown -R live:live /home/live
 
 echo ">>> Extract assets..."
 cp -av "${SFSDIR}/usr/lib/systemd/boot/efi/systemd-bootx64.efi" "${BOOT}/bootx64.efi"
@@ -188,7 +192,7 @@ ls -la "${SFSDIR}/"
 
 echo ">>> Compress the LiveOS squashfs.img using the ${COMPRESSOR} compression preset..."
 time mksquashfs "${SFSDIR}"/* "${SFSDIR}/.moss" "${TMPFS}/root/LiveOS/squashfs.img" \
-  -root-becomes LiveOS -keep-as-directory -all-root -b 1M -progress -comp ${COMPRESSION_ARGS[$COMPRESSOR]}
+  -root-becomes LiveOS -keep-as-directory -b 1M -progress -comp ${COMPRESSION_ARGS[$COMPRESSOR]}
 
 echo ">>> Create and mount the efi.img backing file..."
 fallocate -l 45M "${TMPFS}/efi.img"
