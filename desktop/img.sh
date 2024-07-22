@@ -161,6 +161,7 @@ time ${CHROOT} -D "${SFSDIR}" useradd -c "Live User" -d "/home/live" -G "disk,au
 cp -R ${WORK}/rootfs_extra/etc/* "${SFSDIR}/etc/."
 chown -R root:root "${SFSDIR}/etc"
 ${CHROOT} -D "${SFSDIR}" chown -R live:live /home/live
+${CHROOT} -D "${SFSDIR}" passwd -d
 
 echo ">>> Extract assets..."
 cp -av "${SFSDIR}/usr/lib/systemd/boot/efi/systemd-bootx64.efi" "${BOOT}/bootx64.efi"
