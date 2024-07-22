@@ -14,6 +14,11 @@ Requires 8GiB of free RAM because it uses tmpfs storage to create the various im
     - zstd19 (recommended for release ISOs)
     - lz4hc
 
+# Booting on Serpent OS
+
+    qemu-system-x86_64 -enable-kvm -m 4096m -cdrom snekvalidator.iso -drive if=pflash,format=raw,readonly=on,file=/usr/share/qemu/edk2-x86_64-code.fd -device virtio-vga-gl,xres=1920,yres=1080 -display gtk,gl=on,show-cursor=on
+
+
 ## Troubleshooting
 
 > Ikey Doherty
