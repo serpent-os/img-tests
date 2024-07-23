@@ -157,7 +157,7 @@ echo ">>> Fix performance issues. Needs packaging/merging by moss"
 time ${CHROOT} -D "${SFSDIR}" systemd-hwdb update && echo ">>>>> systemd-hwdb update done."
 
 echo ">>> Configuring live user."
-time ${CHROOT} -D "${SFSDIR}" useradd -c "Live User" -d "/home/live" -G "disk,audio,adm,wheel,render,input,users" -m -U -s "/usr/bin/bash" live
+time ${CHROOT} -D "${SFSDIR}" useradd -c "Live User" -d "/home/live" -G "audio,adm,wheel,render,input,users" -m -U -s "/usr/bin/bash" live
 cp -R ${WORK}/rootfs_extra/etc/* "${SFSDIR}/etc/."
 chown -R root:root "${SFSDIR}/etc"
 ${CHROOT} -D "${SFSDIR}" chown -R live:live /home/live
