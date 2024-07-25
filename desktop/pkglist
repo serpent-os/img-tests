@@ -4,8 +4,10 @@ gnome-console
 gnome-control-center
 gnome-text-editor
 font-hack
+font-noto
 font-noto-emoji
 firefox
+liberation-fonts-ttf
 loupe
 nautilus
 serpent-gnome-defaults
