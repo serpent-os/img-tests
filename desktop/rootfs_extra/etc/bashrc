@@ -1,0 +1,8 @@
+# Live session /etc/bashrc
+
+echo -e "\nWelcome to \e[34mSerpent OS\e[0m pre-alpha0!"
+echo -e "\n"
+echo -e "To install, run 'sudo lichen'. Note, you need to partition your disk first"
+
+# End live session /etc/bashrc
+
