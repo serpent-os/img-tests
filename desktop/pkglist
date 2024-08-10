@@ -21,4 +21,9 @@ linux-firmware-iwlwifi
 linux-firmware-nvidia
 lvm2
 
+dmidecode
+iproute2
+pciutils
+usbutils
+
 lichen
