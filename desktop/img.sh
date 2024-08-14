@@ -32,19 +32,48 @@ COMPRESSION_ARGS["zstd19"]="zstd -Xcompression-level 19"
 # Only here for comparison with zstd -19
 COMPRESSION_ARGS["xz"]="xz -Xbcj x86"
 
-# Let the user set the COMPRESSION variable and document supported compressors in the README
-export COMPRESSOR="${COMPRESSION:-lz4}"
-
-if [[ -n "${COMPRESSION_ARGS[$COMPRESSOR]}" ]]; then
-    echo -e "\nISO Compression type: ${COMPRESSOR} (specify via 'sudo -E COMPRESSION=foo ./img.sh')\n"
-else
-    echo -e "You specified the compression type: $COMPRESSION\n"
+function print_valid_compression_types() {
     echo "Valid compression types are:"
     for key in ${!COMPRESSION_ARGS[@]}; do
         echo "- $key"
     done
-    die "\nInvalid compression type $COMPRESSION specified, exiting.\n"
-fi
+}
+
+function usage() {
+    echo -e "\nUsage: sudo ./img.sh -c <compression type>\n"
+    print_valid_compression_types
+    echo -e "\nThe default compression type is lz4 (quick, easy to spot size regressions).\n"
+    echo -e "The best tradeoff between size and speed is zstd3.\n"
+}
+
+while getopts 'c:' opt
+do
+  case "$opt" in
+  c)
+    COMPRESSION="$OPTARG"
+    if [[ -z "$COMPRESSION" ]]; then
+        echo "No compression type specified."
+        usage
+        exit 1
+    elif [[ -z "${COMPRESSION_ARGS[$COMPRESSION]}" ]]; then
+        echo "Invalid compression type "$COMPRESSION" specified."
+        usage
+        exit 1
+    else
+        # we're good, carry on
+        :
+    fi
+    ;;
+  ?)
+    usage
+    exit 1
+    ;;
+  esac
+done
+
+# Let the user set the COMPRESSION variable and document supported compressors in the README
+export COMPRESSOR="${COMPRESSION:-lz4}"
+echo "Using compression type: $COMPRESSOR"
 
 WORK="$(dirname $(realpath $0))"
 echo ">>> workdir \${WORK}: ${WORK}"
