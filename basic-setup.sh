@@ -14,7 +14,7 @@
 # target dirs
 # use a default sosroot
 SOSROOT="${DESTDIR:-${PWD}/sosroot}"
-BOULDERCACHE="/var/cache/boulder"
+BOULDERCACHE="${HOME}/.cache/boulder"
 
 # utility functions
 BOLD='\033[1m'

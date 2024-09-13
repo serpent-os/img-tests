@@ -20,6 +20,8 @@ showHelp() {
 You can now start a systemd-nspawn container with:
 
  sudo systemd-nspawn --bind=${BOULDERCACHE}/ -D ${SOSROOT}/ -b
+  OR
+ sudo ./boot-systemd-nspawn-container.sh (rewritten on each ./create-sosroot.sh run)
 
 Do a 'systemctl poweroff' inside the container to shut it down.
 
@@ -50,5 +52,5 @@ checkPrereqs
 basicSetup
 showHelp
 # Make it simple to boot into the created sosroot at a later point
-createBootScript
+createBootScript && chmod a+x boot-systemd-nspawn-container.sh
 cleanEnv
