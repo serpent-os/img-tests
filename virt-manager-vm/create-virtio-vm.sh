@@ -81,7 +81,10 @@ fi
 
 MSG="Setting up virt-mananger ${SOSNAME} instance from template..."
 printInfo "${MSG}"
-FOUNDPAYLOAD="$(find /usr/share -name OVMF_CODE.fd |& grep -i ovmf/)"
+# In some cases, this will find more than one entry
+FOUNDPAYLOADS=($(find /usr/share -name OVMF_CODE.fd))
+# ... if so, just pick the first one
+FOUNDPAYLOAD=${FOUNDPAYLOADS[0]}
 # Defaults to the location in Solus
 UEFIPAYLOAD="${FOUNDPAYLOAD:-/usr/share/edk2-ovmf/x64/OVMF_CODE.fd}"
 MSG="Found \$UEFIPAYLOAD: ${UEFIPAYLOAD}..."
