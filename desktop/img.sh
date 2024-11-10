@@ -257,7 +257,7 @@ xorriso -as mkisofs \
     "${TMPFS}/root"
 
 echo "Successfully built $(ls -s --block-size=M snekvalidator.iso) using $COMPRESSION compression."
-echo -e "\n(specify compression type via 'sudo -E COMPRESSION=lz4 ./img.sh')\n"
+echo -e "\n(specify compression type via 'sudo ./img.sh -c <compression type>')\n"
 
 cleanup
 
