@@ -1,6 +1,6 @@
 sysbinary(gdm)
+binary(ptyxis)
 gnome-backgrounds
-gnome-console
 gnome-control-center
 gnome-text-editor
 font-hack
