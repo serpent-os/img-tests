@@ -1,4 +1,5 @@
 sysbinary(gdm)
+sysbinary(plymouthd)
 binary(ptyxis)
 gnome-backgrounds
 gnome-control-center
