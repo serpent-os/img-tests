@@ -13,6 +13,9 @@ loupe
 nautilus
 serpent-gnome-defaults
 
+starship
+font-firacode-nerd
+
 kmod
 linux-desktop
 linux-firmware
