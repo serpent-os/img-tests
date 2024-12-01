@@ -236,7 +236,9 @@ time mksquashfs "${SFSDIR}"/* "${SFSDIR}/.moss" "${TMPFS}/root/LiveOS/squashfs.i
   -root-becomes LiveOS -keep-as-directory -b 1M -progress -comp ${COMPRESSION_ARGS[$COMPRESSOR]}
 
 echo ">>> Create and mount the efi.img backing file..."
-fallocate -l 50M "${TMPFS}/efi.img"
+EFI_SIZE=$(du -c "${BOOT}/bootx64.efi" "${BOOT}/kernel" "${BOOT}/initrd" "${WORK}/live-os.conf" | grep total | awk '{print $1}')
+EFI_SIZE=$((EFI_SIZE + 1024)) # Add some buffer space
+fallocate -l ${EFI_SIZE}K "${TMPFS}/efi.img"
 mkfs.vfat -F 12 "${TMPFS}/efi.img" -n EFIBOOTISO
 mount -vo loop "${TMPFS}/efi.img" "${MOUNT}"
 
