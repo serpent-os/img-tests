@@ -40,13 +40,16 @@ function print_valid_compression_types() {
 }
 
 function usage() {
-    echo -e "\nUsage: sudo ./img.sh -c <compression type>\n"
+    echo -e "\nUsage: sudo ./img.sh -c <compression type> -p <package list>\n"
     print_valid_compression_types
     echo -e "\nThe default compression type is lz4 (quick, easy to spot size regressions).\n"
     echo -e "The best tradeoff between size and speed is zstd3.\n"
+    echo -e "\nThe default package list is pkglist.\n"
 }
 
-while getopts 'c:' opt
+PACKAGE_LIST="pkglist"
+
+while getopts 'c:p:' opt
 do
   case "$opt" in
   c)
@@ -62,6 +65,14 @@ do
     else
         # we're good, carry on
         :
+    fi
+    ;;
+  p)
+    PACKAGE_LIST="$OPTARG"
+    if [[ -z "$PACKAGE_LIST" ]]; then
+        echo "No package list specified."
+        usage
+        exit 1
     fi
     ;;
   ?)
@@ -111,14 +122,14 @@ else
 fi
 
 # Pkg list check
-test -f "${WORK}/pkglist" || die "\nThis script MUST be run from within the desktop/ dir with the ./pkglist file.\n"
 test -f "${WORK}/../pkglist-base" || die "\nThis script MUST be able to find the ../pkglist-base file.\n"
+test -f "${WORK}/${PACKAGE_LIST}" || die "\nThe specified package list file ${PACKAGE_LIST} does not exist.\n"
 
 # start with a common base of packages
 readarray -t PACKAGES < "${WORK}/../pkglist-base"
 
 # add linux-desktop specific packages
-PACKAGES+=($(cat "${WORK}/pkglist"))
+PACKAGES+=($(cat "${WORK}/${PACKAGE_LIST}"))
 
 test -f ${WORK}/initrdlist || die "\nThis script MUST be run from within the desktop/ dir with the ./initrd file.\n"
 readarray -t initrd < "${WORK}/initrdlist"
@@ -166,7 +177,7 @@ chmod -Rc u=rwX,g=rX,o=rX "${MOUNT}" "${SFSDIR}"
 
 export RUST_BACKTRACE=1
 
-export MOSS="moss -D ${SFSDIR} --cache ${CACHE}" 
+export MOSS="moss -D ${SFSDIR} --cache ${CACHE}"
 
 echo ">>> Add moss volatile repository to ${SFSDIR}/ ..."
 time ${MOSS} repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index || die_and_cleanup "Adding moss repo failed!"
@@ -257,10 +268,12 @@ xorriso -as mkisofs \
     "${TMPFS}/root"
 
 echo "Successfully built $(ls -s --block-size=M snekvalidator.iso) using $COMPRESSION compression."
-echo -e "\n(specify compression type via 'sudo ./img.sh -c <compression type>')\n"
+echo -e "\n(specify compression type via 'sudo ./img.sh -c <compression type> -p <package list>')\n"
 
 cleanup
 
 for v in BOOT CACHE CHROOT COMPRESSOR MOSS MOUNT RUST_BACKTRACE SFSDIR TMPFS WORK; do
-    unset "${v}"
+    unset "${v}" || true
 done
+
+exit 0
