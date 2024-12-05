@@ -25,7 +25,7 @@ build:
 
 # Boot the ISO using QEMU with the specified settings
 boot:
-    qemu-system-x86_64 -enable-kvm -m {{memory}} -cdrom {{target}}/{{iso}} -drive if=pflash,format=raw,readonly=on,file={{firmware}} -device virtio-vga-gl,xres=1920,yres=1080 -display gtk,gl=on,show-cursor=on
+    qemu-system-x86_64 -enable-kvm -m {{memory}} -cdrom {{target}}/{{iso}} -drive if=pflash,format=raw,readonly=on,file={{firmware}} -device virtio-vga-gl,xres=1920,yres=1080 -display sdl,gl=on,show-cursor=on
 
 # Build the ISO and then boot it using QEMU
 build-and-boot: build boot
