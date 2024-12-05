@@ -100,7 +100,7 @@ basicSetup () {
 
     MSG="Adding volatile serpent os repository..."
     printInfo "${MSG}"
-    sudo ${moss} -D "${SOSROOT}" -y repo add volatile https://dev.serpentos.com/volatile/x86_64/stone.index -p0 || die "${MSG}"
+    sudo ${moss} -D "${SOSROOT}" -y repo add volatile https://packages.serpentos.com/volatile/x86_64/stone.index -p0 || die "${MSG}"
 
     MSG="Installing packages..."
     printInfo "${MSG}"
