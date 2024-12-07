@@ -212,7 +212,7 @@ time ${MOSS} install "${initrd[@]}" -y || die_and_cleanup "Failed to install ini
 
 echo ">>> Regenerate dracut..."
 kver=$(ls "${SFSDIR}/usr/lib/modules")
-time ${CHROOT} -D "${SFSDIR}/" dracut --early-microcode --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd
+time ${CHROOT} -D "${SFSDIR}/" dracut --early-microcode --hardlink -N --nomdadmconf --nolvmconf --kver ${kver} --add "bash dash systemd lvm dm dmsquash-live plymouth" --fwdir /usr/lib/firmware --tmpdir /tmp --zstd --strip /initrd -v
 mv -v "${SFSDIR}/initrd" "${BOOT}/initrd"
 
 echo ">>> Roll back and prune to keep only initially installed state and remove downloads ..."
