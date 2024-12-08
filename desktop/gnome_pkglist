@@ -33,3 +33,4 @@ usbutils
 lichen
 spice-vdagent
 binary(gnome-disks)
+binary(starship)
