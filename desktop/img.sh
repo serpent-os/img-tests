@@ -285,7 +285,8 @@ xorriso -as mkisofs \
     -V "SERPENTISO" -A "SERPENTISO" \
     "${TMPFS}/root"
 
-echo "Successfully built $(ls -hs --block-size=M ${OUTPUT}.iso) using $COMPRESSION compression."
+# The gnarly sed operation is here because the uutils-coreutils `ls` does not output the unit next to the size
+echo "Successfully built $(ls -s --block-size=M ${OUTPUT}.iso | sed 's|\([[:digit:]]+*\) \(.*\)$|\1M \2|g') using $COMPRESSION compression."
 
 cleanup
 
