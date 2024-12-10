@@ -34,3 +34,4 @@ lichen
 spice-vdagent
 binary(gnome-disks)
 binary(starship)
+binary(gparted)
