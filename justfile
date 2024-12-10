@@ -52,7 +52,7 @@ _clean:
     @cd {{target}} && sudo rm -vf *.iso
 
 _list-isos:
-    cd {{target }} && sudo ls -AFcghlost --block-size=M *.iso
+    cd {{target }} && ls -AFcghlot --block-size=M *.iso
 
 # Clean out existing .iso files in {{target}} (desktop/ by default)
 clean: _list-isos && _clean
