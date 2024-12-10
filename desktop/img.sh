@@ -40,16 +40,19 @@ function print_valid_compression_types() {
 }
 
 function usage() {
-    echo -e "\nUsage: sudo ./img.sh -c <compression type> -p <package list>\n"
+    echo -e "\nUsage: sudo ./img.sh -c <compression type> -o <output>.iso -p <package list>\n"
     print_valid_compression_types
     echo -e "\nThe default compression type is lz4 (quick, easy to spot size regressions).\n"
     echo -e "The best tradeoff between size and speed is zstd3.\n"
+    echo -e "\nThe default output is 'snekvalidator' (becomes 'snekvalidator.iso')"
     echo -e "\nThe default package list is pkglist.\n"
 }
 
+# defaults
 PACKAGE_LIST="pkglist"
+OUTPUT="snekvalidator"
 
-while getopts 'c:p:' opt
+while getopts 'c:o:p:' opt
 do
   case "$opt" in
   c)
@@ -60,6 +63,17 @@ do
         exit 1
     elif [[ -z "${COMPRESSION_ARGS[$COMPRESSION]}" ]]; then
         echo "Invalid compression type "$COMPRESSION" specified."
+        usage
+        exit 1
+    else
+        # we're good, carry on
+        :
+    fi
+    ;;
+  o)
+    OUTPUT="$OPTARG"
+    if [[ -z "${OUTPUT}" ]]; then
+        echo "No <output>.iso filename specified."
         usage
         exit 1
     else
@@ -135,15 +149,17 @@ test -f ${WORK}/initrdlist || die "\nThis script MUST be run from within the des
 readarray -t initrd < "${WORK}/initrdlist"
 
 cleanup () {
-    echo -e "\nCleaning up existing dirs, files and mount points...\n"
-    # clean up dirs
-    rm -rf "${TMPFS}"/*
+    echo -e "\nCleaning up existing dirs, files and mount points..."
+    # clean up dirs (if something fails here, let the remaining lines take care of it)
+    rm -rf "${TMPFS}"/* || echo "- Removing ${TMPFS}/* failed."
 
     # umount existing mount recursively and lazily
-    test -d "${TMPFS}"/* && umount -Rlv "${TMPFS}"/*
+    test -d "${TMPFS}"/* && { umount -Rlv "${TMPFS}"/* || echo "- Recursive unmounting of ${TMPFS}/* failed." ;}
 
     # clean leftover existing *.img
-    test -e "${TMPFS}"/*.img && rm -f "${TMPFS}"/*.img
+    test -e "${TMPFS}"/*.img && { rm -vf "${TMPFS}"/*.img || echo "- Removing leftover ${TMPFS}/*.img files failed." ;}
+
+    echo "- Cleanup done."
 }
 cleanup
 
@@ -258,9 +274,9 @@ cp -v "${TMPFS}/efi.img" "${TMPFS}/root/EFI/Boot/efiboot.img"
 
 echo ">>> Create the ISO file..."
 xorriso -as mkisofs \
-    -o "${WORK}/snekvalidator.iso" \
+    -o "${WORK}/${OUTPUT}.iso" \
     -R -J -v -d -N \
-    -x snekvalidator.iso \
+    -x "${OUTPUT}.iso" \
     -hide-rr-moved \
     -no-emul-boot \
     -eltorito-platform efi \
@@ -269,8 +285,7 @@ xorriso -as mkisofs \
     -V "SERPENTISO" -A "SERPENTISO" \
     "${TMPFS}/root"
 
-echo "Successfully built $(ls -s --block-size=M snekvalidator.iso) using $COMPRESSION compression."
-echo -e "\n(specify compression type via 'sudo ./img.sh -c <compression type> -p <package list>')\n"
+echo "Successfully built $(ls -hs --block-size=M ${OUTPUT}.iso) using $COMPRESSION compression."
 
 cleanup
 
