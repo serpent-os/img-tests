@@ -27,7 +27,7 @@ help:
     @echo 'Examples:'
     @echo '    just build  # will build a quick, lz4 compressed gnome "gnome-snek-lz4.iso" by default'
     @echo '    just flavor="gnome" compression="zstd3" output="serpent-gnome-test" build'
-    @echo '    just output="serpent-gnome-test" firmware="/usr/share/edk2-ovmf/x64/OVMF_CODE.fd" boot'
+    @echo '    just output="serpent-gnome-test" memory="8192m" firmware="/usr/share/edk2-ovmf/x64/OVMF_CODE.fd" boot'
     @echo '    just flavor="cosmic" build-and-boot'
     @just -l
 
