@@ -1,5 +1,6 @@
 bash-completion
 binary(bash)
+binary(fastfetch)
 binary(file)
 binary(find)
 binary(gawk)
@@ -8,7 +9,6 @@ binary(gzip)
 binary(less)
 binary(moss)
 binary(nano)
-binary(neofetch)
 binary(ping)
 binary(ps)
 binary(sed)
@@ -19,6 +19,7 @@ binary(tar)
 binary(unzip)
 binary(wget)
 binary(which)
+
 ca-certificates
 coreutils
 dbus
