@@ -1,20 +1,12 @@
 sysbinary(gdm)
 sysbinary(plymouthd)
-binary(ptyxis)
 gnome-backgrounds
-gnome-control-center
-gnome-text-editor
+serpent-gnome-defaults
+
 font-hack
 font-noto
 font-noto-emoji
-firefox
 liberation-fonts-ttf
-loupe
-nautilus
-serpent-gnome-defaults
-
-starship
-font-firacode-nerd
 
 kmod
 linux-desktop
@@ -32,6 +24,18 @@ usbutils
 
 lichen
 spice-vdagent
+
+binary(celluloid)
+binary(firefox)
+binary(gnome-control-center)
 binary(gnome-disks)
-binary(starship)
+binary(gnome-software)
+binary(gnome-system-monitor)
+binary(gnome-text-editor)
+binary(gnome-tweaks)
 binary(gparted)
+binary(loupe)
+binary(nautilus)
+binary(ptyxis)
+binary(starship)
+binary(zed)
