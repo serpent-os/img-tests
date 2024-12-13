@@ -21,6 +21,7 @@ usbutils
 lichen
 spice-vdagent
 binary(celluloid)
+binary(file-roller)
 binary(firefox)
 binary(gnome-control-center)
 binary(gnome-disks)
