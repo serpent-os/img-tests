@@ -203,7 +203,6 @@ time ${MOSS} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages
 
 echo ">>> Set up basic environment in ${SFSDIR}/ ..."
 time ${CHROOT} -D "${SFSDIR}" systemd-firstboot --force --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash && echo ">>>>> systemd-firstboot run done."
-time ${CHROOT} -D "${SFSDIR}" systemctl enable getty@tty1 && echo ">>>>> systemctl enable basic systemd services done."
 
 echo ">>> Configuring live user."
 time ${CHROOT} -D "${SFSDIR}" useradd -c "Live User" -d "/home/live" -G "audio,adm,wheel,render,input,users" -m -U -s "/usr/bin/bash" live
