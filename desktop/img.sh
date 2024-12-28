@@ -201,16 +201,9 @@ time ${MOSS} repo add volatile https://packages.serpentos.com/volatile/x86_64/st
 echo ">>> Install packages to ${SFSDIR}/ ..."
 time ${MOSS} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
 
-echo ">>> Fix ldconfig in ${SFSDIR}/ ..."
-mkdir -pv "${SFSDIR}/var/cache/ldconfig"
-time ${CHROOT} -D "${SFSDIR}" ldconfig
-
 echo ">>> Set up basic environment in ${SFSDIR}/ ..."
-time ${CHROOT} -D "${SFSDIR}" systemd-firstboot --force --setup-machine-id --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash && echo ">>>>> systemd-firstboot run done."
+time ${CHROOT} -D "${SFSDIR}" systemd-firstboot --force --delete-root-password --locale=en_US.UTF-8 --timezone=UTC --root-shell=/usr/bin/bash && echo ">>>>> systemd-firstboot run done."
 time ${CHROOT} -D "${SFSDIR}" systemctl enable getty@tty1 && echo ">>>>> systemctl enable basic systemd services done."
-
-echo ">>> Fix performance issues. Needs packaging/merging by moss"
-time ${CHROOT} -D "${SFSDIR}" systemd-hwdb update && echo ">>>>> systemd-hwdb update done."
 
 echo ">>> Configuring live user."
 time ${CHROOT} -D "${SFSDIR}" useradd -c "Live User" -d "/home/live" -G "audio,adm,wheel,render,input,users" -m -U -s "/usr/bin/bash" live
