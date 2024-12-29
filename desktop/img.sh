@@ -264,15 +264,25 @@ echo ">>> Put the new EFI image in the correct place..."
 mkdir -pv "${TMPFS}/root/EFI/Boot"
 cp -v "${TMPFS}/efi.img" "${TMPFS}/root/EFI/Boot/efiboot.img"
 
+echo ">>> Copy the isolinux bootloader..."
+mkdir -pv "${TMPFS}/root/isolinux/"
+cp -v "${WORK}/../iso_assets/isolinux.bin" "${TMPFS}/root/isolinux/."
+
 echo ">>> Create the ISO file..."
 xorriso -as mkisofs \
     -o "${WORK}/${OUTPUT}.iso" \
     -R -J -v -d -N \
     -x "${OUTPUT}.iso" \
     -hide-rr-moved \
+    -isohybrid-mbr ${WORK}/../iso_assets/isohdpfx.bin \
+    -b isolinux/isolinux.bin \
+    -c isolinux/boot.cat \
+    -boot-load-size 4 \
+    -boot-info-table \
     -no-emul-boot \
-    -eltorito-platform efi \
-    -eltorito-boot EFI/Boot/efiboot.img \
+    -eltorito-alt-boot \
+    -e EFI/Boot/efiboot.img \
+    -no-emul-boot \
     -isohybrid-gpt-basdat \
     -V "SERPENTISO" -A "SERPENTISO" \
     "${TMPFS}/root"
