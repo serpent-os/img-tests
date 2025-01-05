@@ -37,7 +37,7 @@ build:
 
 # Boot the specified ISO using QEMU with the specified settings
 boot:
-    qemu-system-x86_64 -enable-kvm -m {{memory}} -cdrom {{target}}/{{output}}.iso -drive if=pflash,format=raw,readonly=on,file={{firmware}} -device virtio-vga-gl,xres=1920,yres=1080 -display sdl,gl=on,show-cursor=off
+    qemu-system-x86_64 -enable-kvm -m {{memory}} -cdrom {{target}}/{{output}}.iso -drive if=pflash,format=raw,readonly=on,file={{firmware}} -device virtio-vga-gl,xres=1920,yres=1080 -display sdl,gl=on,show-cursor=off -cpu host
 
 # Build a flavor iso using compression type and then boot it using QEMU with specified firmware
 build-and-boot: build boot
@@ -48,7 +48,7 @@ release:
     just build flavor="cosmic" compression="zstd3"
 
 [confirm('This will delete ALL found .iso images -- continue?')]
-_clean: 
+_clean:
     @cd {{target}} && sudo rm -vf *.iso
 
 _list-isos:
