@@ -211,6 +211,9 @@ chown -R root:root "${SFSDIR}/etc"
 ${CHROOT} -D "${SFSDIR}" chown -R live:live /home/live
 ${CHROOT} -D "${SFSDIR}" passwd -d live
 
+echo ">>> Forcibly refreshing flatpak."
+time ${CHROOT} -D "${SFSDIR}" flatpak update --system --appstream --no-deps --no-related -v
+
 echo ">>> Extract assets..."
 cp -av "${SFSDIR}/usr/lib/systemd/boot/efi/systemd-bootx64.efi" "${BOOT}/bootx64.efi"
 cp -av "${SFSDIR}"/usr/lib/kernel/*/vmlinuz "${BOOT}/kernel"
