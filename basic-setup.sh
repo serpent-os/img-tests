@@ -80,7 +80,7 @@ basicSetup () {
     printInfo "${MSG}"
     sudo rm -rf "${SOSROOT}" || die "${MSG}"
 
-    MSG="Making sure ${BOULDERCAHCE} directory exists..."
+    MSG="Making sure ${BOULDERCACHE} directory exists..."
     printInfo "${MSG}"
     sudo mkdir -pv "${BOULDERCACHE}"
 
