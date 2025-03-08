@@ -287,7 +287,7 @@ xorriso -as mkisofs \
     -e EFI/Boot/efiboot.img \
     -no-emul-boot \
     -isohybrid-gpt-basdat \
-    -V "SERPENTISO" -A "SERPENTISO" \
+    -V "AERYNOSLIVE" -A "AERYNOSLIVE" \
     "${TMPFS}/root"
 
 # The gnarly sed operation is here because the uutils-coreutils `ls` does not output the unit next to the size
