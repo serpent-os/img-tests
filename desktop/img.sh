@@ -195,8 +195,8 @@ export RUST_BACKTRACE=1
 
 export MOSS="moss -D ${SFSDIR} --cache ${CACHE}"
 
-echo ">>> Add moss volatile repository to ${SFSDIR}/ ..."
-time ${MOSS} repo add volatile https://packages.aerynos.com/volatile/x86_64/stone.index || die_and_cleanup "Adding moss repo failed!"
+echo ">>> Add raw volatile repository to ${SFSDIR}/ ..."
+time ${MOSS} repo add volatile https://packages.aerynos.dev/volatile/x86_64/stone.index || die_and_cleanup "Adding moss repo failed!"
 
 echo ">>> Install packages to ${SFSDIR}/ ..."
 time ${MOSS} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
