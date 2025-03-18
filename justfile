@@ -11,7 +11,7 @@ flavor := "gnome"
 compression := "lz4"
 
 # Define the name of the generated ISO file (saved as output.iso)
-output := flavor + "-snek-" + compression
+output := flavor + "-aerynos-" + compression
 
 # Allocate default memory size for QEMU
 memory := "4096m"
@@ -25,9 +25,9 @@ help:
     @echo '    just [img_script] [target] [flavor] [compression] [output] [memory] [firmware] recipe'
     @echo '    (most people should only use the flavor, compression, output, or firmware options)'
     @echo 'Examples:'
-    @echo '    just build  # will build a quick, lz4 compressed gnome "gnome-snek-lz4.iso" by default'
-    @echo '    just flavor="gnome" compression="zstd3" output="serpent-gnome-test" build'
-    @echo '    just output="serpent-gnome-test" memory="8192m" firmware="/usr/share/edk2-ovmf/x64/OVMF_CODE.fd" boot'
+    @echo '    just build  # will build a quick, lz4 compressed gnome "gnome-aerynos-lz4.iso" by default'
+    @echo '    just flavor="gnome" compression="zstd3" output="aerynos-gnome-test" build'
+    @echo '    just output="aerynos-gnome-test" memory="8192m" firmware="/usr/share/edk2-ovmf/x64/OVMF_CODE.fd" boot'
     @echo '    just flavor="cosmic" build-and-boot'
     @just -l
 

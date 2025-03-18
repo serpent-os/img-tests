@@ -44,13 +44,13 @@ function usage() {
     print_valid_compression_types
     echo -e "\nThe default compression type is lz4 (quick, easy to spot size regressions).\n"
     echo -e "The best tradeoff between size and speed is zstd3.\n"
-    echo -e "\nThe default output is 'snekvalidator' (becomes 'snekvalidator.iso')"
+    echo -e "\nThe default output is 'aerynos' (becomes 'aerynos.iso')"
     echo -e "\nThe default package list is pkglist.\n"
 }
 
 # defaults
 PACKAGE_LIST="pkglist"
-OUTPUT="snekvalidator"
+OUTPUT="aerynos"
 
 while getopts 'c:o:p:' opt
 do
