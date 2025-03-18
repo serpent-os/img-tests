@@ -4,8 +4,8 @@
 #
 # SPDX-License-Identifier: MPL-2.0
 #
-# Serpent OS prototype linux-desktop ISO image generator
-
+# AerynOS prototype linux-desktop ISO image generator
+#
 die () {
     echo -e "$*"
     exit 1
@@ -102,7 +102,7 @@ echo "Using compression type: $COMPRESSOR"
 
 WORK="$(dirname $(realpath $0))"
 echo ">>> workdir \${WORK}: ${WORK}"
-TMPFS="/tmp/serpent_iso"
+TMPFS="/tmp/aerynos_iso"
 echo ">>> tmpfs dir \${TMPFS}: ${TMPFS}"
 
 BINARIES=(
@@ -132,7 +132,7 @@ done
 if [[ ${BINARY_NOT_FOUND} -gt 0 ]]; then
     die "\nNecessary prerequisites not met, please install missing tool(s).\n"
 else
-    echo -e "\nAll necessary binaries found, generating Serpent OS linux-desktop ISO image...\n"
+    echo -e "\nAll necessary binaries found, generating AerynOS linux-desktop ISO image...\n"
 fi
 
 # Pkg list check
@@ -174,7 +174,7 @@ set -e
 export BOOT="${TMPFS}/boot"
 export CACHE="${WORK}/cached_stones"
 export MOUNT="${TMPFS}/mount"
-export SFSDIR="${TMPFS}/serpentfs"
+export SFSDIR="${TMPFS}/aerynosfs"
 export CHROOT="systemd-nspawn --as-pid2 --private-users=identity --user=0 --quiet"
 
 
@@ -196,7 +196,7 @@ export RUST_BACKTRACE=1
 export MOSS="moss -D ${SFSDIR} --cache ${CACHE}"
 
 echo ">>> Add moss volatile repository to ${SFSDIR}/ ..."
-time ${MOSS} repo add volatile https://packages.serpentos.com/volatile/x86_64/stone.index || die_and_cleanup "Adding moss repo failed!"
+time ${MOSS} repo add volatile https://packages.aerynos.com/volatile/x86_64/stone.index || die_and_cleanup "Adding moss repo failed!"
 
 echo ">>> Install packages to ${SFSDIR}/ ..."
 time ${MOSS} install -y "${PACKAGES[@]}" || die_and_cleanup "Installing packages failed!"
