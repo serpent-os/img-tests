@@ -1,7 +1,7 @@
 sysbinary(gdm)
 sysbinary(plymouthd)
 gnome-backgrounds
-serpent-gnome-defaults
+gnome-desktop-defaults
 font-hack
 font-noto
 font-noto-emoji
